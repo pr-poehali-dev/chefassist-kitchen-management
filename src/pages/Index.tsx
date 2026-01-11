@@ -864,7 +864,7 @@ const Index = () => {
                           </CardContent>
                         </Card>
                       ))
-                    )}
+                    ) : null}
                     {[
                       { id: 1, name: 'Плановая январь 2026', date: '2026-01-15', status: 'in_progress', items: 45, checked: 28, responsible: 'Иванов П.' },
                       { id: 2, name: 'Внеплановая проверка', date: '2026-01-08', status: 'completed', items: 32, checked: 32, responsible: 'Петров С.' },
