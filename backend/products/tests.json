@@ -1,0 +1,16 @@
+{
+  "tests": [
+    {
+      "name": "Test get categories",
+      "method": "GET",
+      "path": "/?action=get_categories&restaurantId=1",
+      "expectedStatus": 200
+    },
+    {
+      "name": "Test get products",
+      "method": "GET",
+      "path": "/?action=get_products&restaurantId=1",
+      "expectedStatus": 200
+    }
+  ]
+}

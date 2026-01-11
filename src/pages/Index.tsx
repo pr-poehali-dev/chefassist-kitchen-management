@@ -11,7 +11,9 @@ import TtkTab from '@/components/tabs/TtkTab';
 import ChecklistsTab from '@/components/tabs/ChecklistsTab';
 import InventoryTab from '@/components/tabs/InventoryTab';
 import EmployeesTab from '@/components/tabs/EmployeesTab';
-import { OrdersTab, WriteoffTab } from '@/components/tabs/OrdersAndWriteoffTabs';
+import ProductsTab from '@/components/tabs/ProductsTab';
+import OrdersTab from '@/components/tabs/OrdersTab';
+import { WriteoffTab } from '@/components/tabs/OrdersAndWriteoffTabs';
 import { toast } from 'sonner';
 import {
   Dialog,
@@ -209,7 +211,7 @@ const Index = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <Card className="border-primary/20 hover:border-primary/40 transition-all hover:shadow-lg hover:shadow-primary/10">
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between">
@@ -219,20 +221,6 @@ const Index = () => {
                   </div>
                   <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
                     <Icon name="ShoppingCart" size={24} className="text-primary" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-destructive/20 hover:border-destructive/40 transition-all hover:shadow-lg hover:shadow-destructive/10">
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">Низкий остаток</p>
-                    <p className="text-3xl font-bold text-destructive">{lowStockItems.length}</p>
-                  </div>
-                  <div className="h-12 w-12 rounded-full bg-destructive/10 flex items-center justify-center">
-                    <Icon name="AlertTriangle" size={24} className="text-destructive" />
                   </div>
                 </div>
               </CardContent>
@@ -270,20 +258,27 @@ const Index = () => {
               <Icon name="CheckSquare" size={16} />
               <span>Чек-листы</span>
             </TabsTrigger>
-            {isChefOrSousChef() && (
-              <TabsTrigger value="employees" className="gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-4">
-                <Icon name="Users" size={16} />
-                <span>Сотрудники</span>
-              </TabsTrigger>
-            )}
-            <TabsTrigger value="inventory" className="gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-4 col-span-3 sm:col-span-1">
-              <Icon name="ClipboardList" size={16} />
-              <span className="hidden sm:inline">Инвентаризация</span>
-              <span className="sm:hidden">Инвент.</span>
-            </TabsTrigger>
             <TabsTrigger value="orders" className="gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-4">
               <Icon name="ShoppingCart" size={16} />
               <span>Заявки</span>
+            </TabsTrigger>
+            {isChefOrSousChef() && (
+              <TabsTrigger value="products" className="gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-4">
+                <Icon name="Package" size={16} />
+                <span className="hidden sm:inline">Матрица</span>
+                <span className="sm:hidden">Матр.</span>
+              </TabsTrigger>
+            )}
+            {isChefOrSousChef() && (
+              <TabsTrigger value="employees" className="gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-4">
+                <Icon name="Users" size={16} />
+                <span>Сотр.</span>
+              </TabsTrigger>
+            )}
+            <TabsTrigger value="inventory" className="gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-4">
+              <Icon name="ClipboardList" size={16} />
+              <span className="hidden sm:inline">Инвентаризация</span>
+              <span className="sm:hidden">Инвент.</span>
             </TabsTrigger>
             <TabsTrigger value="writeoff" className="gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-4">
               <Icon name="MinusCircle" size={16} />
@@ -318,7 +313,9 @@ const Index = () => {
             userName={user.name} 
           />
 
-          <OrdersTab />
+          <ProductsTab restaurantId={user?.restaurantId} isChefOrSousChef={isChefOrSousChef} />
+          
+          <OrdersTab restaurantId={user?.restaurantId} userId={user?.id} isChefOrSousChef={isChefOrSousChef} />
           
           <WriteoffTab />
 
