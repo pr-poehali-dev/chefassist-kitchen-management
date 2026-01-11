@@ -29,26 +29,34 @@ const LoginPage = () => {
     }
   }, []);
 
-  const handleCreateRestaurant = () => {
+  const handleCreateRestaurant = async () => {
     if (!name || !restaurantName) {
       setError('Заполните все поля');
       return;
     }
     
-    const { inviteLink } = createRestaurant(name, restaurantName);
-    setGeneratedInviteLink(inviteLink);
-    setShowInviteLink(true);
+    try {
+      const { inviteLink } = await createRestaurant(name, restaurantName);
+      setGeneratedInviteLink(inviteLink);
+      setShowInviteLink(true);
+    } catch (error) {
+      setError('Ошибка при создании ресторана');
+    }
   };
 
-  const handleJoinRestaurant = () => {
+  const handleJoinRestaurant = async () => {
     if (!name || !selectedRole || !inviteCode) {
       setError('Заполните все поля');
       return;
     }
 
-    const success = joinRestaurant(name, selectedRole, inviteCode);
-    if (!success) {
-      setError('Неверный код приглашения');
+    try {
+      const success = await joinRestaurant(name, selectedRole, inviteCode);
+      if (!success) {
+        setError('Неверный код приглашения');
+      }
+    } catch (error) {
+      setError('Ошибка при присоединении');
     }
   };
 

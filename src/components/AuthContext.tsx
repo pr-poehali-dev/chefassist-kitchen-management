@@ -1,43 +1,45 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 
 type UserRole = 'chef' | 'sous_chef' | 'cook';
 
+const API_URL = 'https://functions.poehali.dev/a5fa1696-9db4-42e2-95a7-573d876feb30';
+
 interface Restaurant {
-  id: string;
+  id: number;
   name: string;
-  createdBy: string;
-  inviteCode: string;
-  createdAt: string;
+  created_by: string;
+  invite_code: string;
+  created_at: string;
 }
 
 interface User {
-  id: string;
+  id: number;
   name: string;
   role: UserRole;
-  restaurantId: string;
+  restaurantId: number;
   restaurantName: string;
 }
 
 interface Employee {
-  id: string;
+  id: number;
   name: string;
   role: UserRole;
-  restaurantId: string;
-  joinedAt: string;
+  restaurant_id: number;
+  joined_at: string;
 }
 
 interface AuthContextType {
   user: User | null;
   restaurant: Restaurant | null;
   employees: Employee[];
-  login: (name: string, role: UserRole, restaurantId: string, restaurantName: string) => void;
+  login: (name: string, role: UserRole, restaurantId: number, restaurantName: string) => void;
   logout: () => void;
   isChefOrSousChef: () => boolean;
-  createRestaurant: (chefName: string, restaurantName: string) => { restaurant: Restaurant; inviteLink: string };
-  joinRestaurant: (name: string, role: UserRole, inviteCode: string) => boolean;
-  getEmployees: () => Employee[];
-  updateEmployeeRole: (employeeId: string, newRole: UserRole) => void;
-  removeEmployee: (employeeId: string) => void;
+  createRestaurant: (chefName: string, restaurantName: string) => Promise<{ restaurant: Restaurant; inviteLink: string }>;
+  joinRestaurant: (name: string, role: UserRole, inviteCode: string) => Promise<boolean>;
+  getEmployees: () => Promise<Employee[]>;
+  updateEmployeeRole: (employeeId: number, newRole: UserRole) => Promise<void>;
+  removeEmployee: (employeeId: number) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -48,110 +50,91 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return savedUser ? JSON.parse(savedUser) : null;
   });
 
-  const [restaurant, setRestaurant] = useState<Restaurant | null>(() => {
-    if (!user) return null;
-    const allRestaurants = JSON.parse(localStorage.getItem('kitchenCosmo_allRestaurants') || '[]');
-    return allRestaurants.find((r: Restaurant) => r.id === user.restaurantId) || null;
-  });
+  const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
+  const [employees, setEmployees] = useState<Employee[]>([]);
 
-  const [employees, setEmployees] = useState<Employee[]>(() => {
-    const savedEmployees = localStorage.getItem('kitchenCosmo_allEmployees');
-    return savedEmployees ? JSON.parse(savedEmployees) : [];
-  });
+  useEffect(() => {
+    if (user) {
+      loadEmployees();
+    }
+  }, [user?.restaurantId]);
 
-  const createRestaurant = (chefName: string, restaurantName: string) => {
-    const inviteCode = Math.random().toString(36).substring(2, 10).toUpperCase();
-    const newRestaurant: Restaurant = {
-      id: Date.now().toString(),
-      name: restaurantName,
-      createdBy: chefName,
-      inviteCode,
-      createdAt: new Date().toISOString()
-    };
-    
-    const newUser: User = {
-      id: Date.now().toString(),
-      name: chefName,
-      role: 'chef',
-      restaurantId: newRestaurant.id,
-      restaurantName: restaurantName
-    };
+  const createRestaurant = async (chefName: string, restaurantName: string) => {
+    const response = await fetch(`${API_URL}?action=create_restaurant`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chefName, restaurantName })
+    });
 
-    const chefEmployee: Employee = {
-      id: newUser.id,
-      name: chefName,
-      role: 'chef',
-      restaurantId: newRestaurant.id,
-      joinedAt: new Date().toISOString()
-    };
-
-    const allRestaurants = JSON.parse(localStorage.getItem('kitchenCosmo_allRestaurants') || '[]');
-    allRestaurants.push(newRestaurant);
-    localStorage.setItem('kitchenCosmo_allRestaurants', JSON.stringify(allRestaurants));
-
-    const allEmployees = JSON.parse(localStorage.getItem('kitchenCosmo_allEmployees') || '[]');
-    allEmployees.push(chefEmployee);
-    localStorage.setItem('kitchenCosmo_allEmployees', JSON.stringify(allEmployees));
-
-    setRestaurant(newRestaurant);
-    setUser(newUser);
-    setEmployees(allEmployees);
-
-    localStorage.setItem('kitchenCosmoUser', JSON.stringify(newUser));
-
-    const inviteLink = `${window.location.origin}?invite=${inviteCode}`;
-    return { restaurant: newRestaurant, inviteLink };
-  };
-
-  const joinRestaurant = (name: string, role: UserRole, inviteCode: string): boolean => {
-    const allRestaurants = JSON.parse(localStorage.getItem('kitchenCosmo_allRestaurants') || '[]');
-    console.log('🔍 Поиск ресторана по коду:', inviteCode);
-    console.log('📋 Все рестораны в localStorage:', allRestaurants);
-    const rest = allRestaurants.find((r: Restaurant) => r.inviteCode === inviteCode);
-    console.log('✅ Найденный ресторан:', rest);
-    
-    if (!rest) {
-      console.error('❌ Ресторан с кодом', inviteCode, 'не найден');
-      return false;
+    if (!response.ok) {
+      throw new Error('Failed to create restaurant');
     }
 
+    const data = await response.json();
+    const rest = data.restaurant;
+    const emp = data.employee;
+
     const newUser: User = {
-      id: Date.now().toString(),
-      name,
-      role,
+      id: emp.id,
+      name: chefName,
+      role: 'chef',
       restaurantId: rest.id,
       restaurantName: rest.name
     };
 
-    const newEmployee: Employee = {
-      id: newUser.id,
-      name,
-      role,
-      restaurantId: rest.id,
-      joinedAt: new Date().toISOString()
-    };
-
-    const allEmployees = JSON.parse(localStorage.getItem('kitchenCosmo_allEmployees') || '[]');
-    allEmployees.push(newEmployee);
-    localStorage.setItem('kitchenCosmo_allEmployees', JSON.stringify(allEmployees));
-
-    setUser(newUser);
     setRestaurant(rest);
-    setEmployees(allEmployees);
-
+    setUser(newUser);
     localStorage.setItem('kitchenCosmoUser', JSON.stringify(newUser));
 
-    return true;
+    const inviteLink = `${window.location.origin}?invite=${rest.invite_code}`;
+    return { restaurant: rest, inviteLink };
   };
 
-  const login = (name: string, role: UserRole, restaurantId: string, restaurantName: string) => {
-    const newUser: User = { id: Date.now().toString(), name, role, restaurantId, restaurantName };
+  const joinRestaurant = async (name: string, role: UserRole, inviteCode: string): Promise<boolean> => {
+    try {
+      const response = await fetch(`${API_URL}?action=join_restaurant`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, role, inviteCode })
+      });
+
+      if (!response.ok) {
+        return false;
+      }
+
+      const data = await response.json();
+      const rest = data.restaurant;
+      const emp = data.employee;
+
+      const newUser: User = {
+        id: emp.id,
+        name,
+        role,
+        restaurantId: rest.id,
+        restaurantName: rest.name
+      };
+
+      setUser(newUser);
+      setRestaurant(rest);
+      localStorage.setItem('kitchenCosmoUser', JSON.stringify(newUser));
+
+      return true;
+    } catch (error) {
+      console.error('Join restaurant error:', error);
+      return false;
+    }
+  };
+
+  const login = (name: string, role: UserRole, restaurantId: number, restaurantName: string) => {
+    const newUser: User = { id: Date.now(), name, role, restaurantId, restaurantName };
     setUser(newUser);
     localStorage.setItem('kitchenCosmoUser', JSON.stringify(newUser));
   };
 
   const logout = () => {
     setUser(null);
+    setRestaurant(null);
+    setEmployees([]);
     localStorage.removeItem('kitchenCosmoUser');
   };
 
@@ -159,31 +142,66 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return user?.role === 'chef' || user?.role === 'sous_chef';
   };
 
-  const getEmployees = (): Employee[] => {
-    if (!user?.restaurantId) return [];
-    return employees.filter(emp => emp.restaurantId === user.restaurantId);
-  };
+  const loadEmployees = async () => {
+    if (!user?.restaurantId) return;
+    
+    try {
+      const response = await fetch(`${API_URL}?action=get_employees`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ restaurantId: user.restaurantId })
+      });
 
-  const updateEmployeeRole = (employeeId: string, newRole: UserRole) => {
-    const allEmployees = JSON.parse(localStorage.getItem('kitchenCosmo_allEmployees') || '[]');
-    const updated = allEmployees.map((emp: Employee) => 
-      emp.id === employeeId ? { ...emp, role: newRole } : emp
-    );
-    setEmployees(updated);
-    localStorage.setItem('kitchenCosmo_allEmployees', JSON.stringify(updated));
-
-    if (user?.id === employeeId) {
-      const updatedUser = { ...user, role: newRole };
-      setUser(updatedUser);
-      localStorage.setItem('kitchenCosmoUser', JSON.stringify(updatedUser));
+      if (response.ok) {
+        const data = await response.json();
+        setEmployees(data.employees);
+      }
+    } catch (error) {
+      console.error('Load employees error:', error);
     }
   };
 
-  const removeEmployee = (employeeId: string) => {
-    const allEmployees = JSON.parse(localStorage.getItem('kitchenCosmo_allEmployees') || '[]');
-    const updated = allEmployees.filter((emp: Employee) => emp.id !== employeeId);
-    setEmployees(updated);
-    localStorage.setItem('kitchenCosmo_allEmployees', JSON.stringify(updated));
+  const getEmployees = async (): Promise<Employee[]> => {
+    await loadEmployees();
+    return employees;
+  };
+
+  const updateEmployeeRole = async (employeeId: number, newRole: UserRole) => {
+    try {
+      const response = await fetch(`${API_URL}?action=update_employee_role`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ employeeId, newRole })
+      });
+
+      if (response.ok) {
+        await loadEmployees();
+        
+        if (user?.id === employeeId) {
+          const updatedUser = { ...user, role: newRole };
+          setUser(updatedUser);
+          localStorage.setItem('kitchenCosmoUser', JSON.stringify(updatedUser));
+        }
+      }
+    } catch (error) {
+      console.error('Update employee role error:', error);
+    }
+  };
+
+  const removeEmployee = async (employeeId: number) => {
+    try {
+      const response = await fetch(`${API_URL}?action=remove_employee`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ employeeId })
+      });
+
+      if (response.ok) {
+        await loadEmployees();
+      }
+    } catch (error) {
+      console.error('Remove employee error:', error);
+    }
   };
 
   return (

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { TabsContent } from '@/components/ui/tabs';
@@ -22,20 +22,30 @@ import {
 } from '@/components/ui/select';
 
 export default function EmployeesTab() {
-  const { restaurant, getEmployees, updateEmployeeRole, removeEmployee, user } = useAuth();
+  const { restaurant, getEmployees, updateEmployeeRole, removeEmployee, user, employees: contextEmployees } = useAuth();
   const [showInviteDialog, setShowInviteDialog] = useState(false);
-  const [editingEmployee, setEditingEmployee] = useState<string | null>(null);
+  const [editingEmployee, setEditingEmployee] = useState<number | null>(null);
   const [newRole, setNewRole] = useState<'chef' | 'sous_chef' | 'cook'>('cook');
+  const [localEmployees, setLocalEmployees] = useState(contextEmployees);
 
-  const employees = getEmployees();
-  const inviteLink = restaurant ? `${window.location.origin}?invite=${restaurant.inviteCode}` : '';
+  const inviteLink = restaurant ? `${window.location.origin}?invite=${restaurant.invite_code}` : '';
+
+  useEffect(() => {
+    loadEmployees();
+  }, []);
+
+  const loadEmployees = async () => {
+    const emps = await getEmployees();
+    setLocalEmployees(emps);
+  };
 
   const copyInviteLink = () => {
     navigator.clipboard.writeText(inviteLink);
   };
 
-  const handleUpdateRole = (employeeId: string) => {
-    updateEmployeeRole(employeeId, newRole);
+  const handleUpdateRole = async (employeeId: number) => {
+    await updateEmployeeRole(employeeId, newRole);
+    await loadEmployees();
     setEditingEmployee(null);
   };
 
@@ -106,7 +116,7 @@ export default function EmployeesTab() {
                     <div className="p-3 bg-primary/5 rounded-lg border border-primary/20">
                       <p className="text-xs text-muted-foreground">
                         <Icon name="Info" size={14} className="inline mr-1" />
-                        Код приглашения: <span className="font-mono font-bold">{restaurant?.inviteCode}</span>
+                        Код приглашения: <span className="font-mono font-bold">{restaurant?.invite_code}</span>
                       </p>
                     </div>
                   </div>
@@ -117,7 +127,7 @@ export default function EmployeesTab() {
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {employees.map((employee) => (
+            {localEmployees.map((employee) => (
               <Card key={employee.id} className="border-border/50">
                 <CardContent className="pt-4">
                   <div className="flex items-center justify-between">
@@ -150,7 +160,7 @@ export default function EmployeesTab() {
                             </Badge>
                           )}
                           <span className="text-xs text-muted-foreground">
-                            • С {new Date(employee.joinedAt).toLocaleDateString('ru-RU')}
+                            • С {new Date(employee.joined_at).toLocaleDateString('ru-RU')}
                           </span>
                         </div>
                       </div>
@@ -190,9 +200,10 @@ export default function EmployeesTab() {
                             <Button 
                               size="sm" 
                               variant="ghost"
-                              onClick={() => {
+                              onClick={async () => {
                                 if (confirm(`Удалить сотрудника ${employee.name}?`)) {
-                                  removeEmployee(employee.id);
+                                  await removeEmployee(employee.id);
+                                  await loadEmployees();
                                 }
                               }}
                             >
@@ -206,7 +217,7 @@ export default function EmployeesTab() {
                 </CardContent>
               </Card>
             ))}
-            {employees.length === 0 && (
+            {localEmployees.length === 0 && (
               <div className="text-center py-12">
                 <Icon name="Users" size={48} className="mx-auto text-muted-foreground mb-4" />
                 <p className="text-muted-foreground">Нет сотрудников</p>

@@ -1,0 +1,40 @@
+{
+  "tests": [
+    {
+      "name": "Create restaurant",
+      "method": "POST",
+      "path": "/?action=create_restaurant",
+      "body": {
+        "chefName": "Иван Петров",
+        "restaurantName": "Тестовый ресторан"
+      },
+      "expectedStatus": 200,
+      "expectedBody": {
+        "restaurant": {
+          "id": "number",
+          "name": "string",
+          "invite_code": "string"
+        },
+        "employee": {
+          "id": "number",
+          "name": "string",
+          "role": "string"
+        }
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Get employees for restaurant",
+      "method": "POST",
+      "path": "/?action=get_employees",
+      "body": {
+        "restaurantId": 1
+      },
+      "expectedStatus": 200,
+      "expectedBody": {
+        "employees": "array"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}
