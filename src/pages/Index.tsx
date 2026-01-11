@@ -44,6 +44,7 @@ const Index = () => {
     const saved = localStorage.getItem('kitchenCosmo_inventoryHistory');
     return saved ? JSON.parse(saved) : [];
   });
+  const [viewInventoryReport, setViewInventoryReport] = useState<any>(null);
   const [checklistList, setChecklistList] = useState(() => {
     const saved = localStorage.getItem('kitchenCosmo_checklists');
     return saved ? JSON.parse(saved) : [
@@ -146,6 +147,20 @@ const Index = () => {
     const last = inventoryHistory[inventoryHistory.length - 1];
     const productNames = last.products.map((p: any) => p.name).join('\n');
     setInventoryProducts(productNames);
+  };
+
+  const handleCompleteInventory = () => {
+    if (!activeInventory) return;
+    const completed = {
+      ...activeInventory,
+      status: 'completed',
+      completedDate: new Date().toISOString().split('T')[0]
+    };
+    const updatedHistory = [...inventoryHistory, completed];
+    setInventoryHistory(updatedHistory);
+    localStorage.setItem('kitchenCosmo_inventoryHistory', JSON.stringify(updatedHistory));
+    setActiveInventory(null);
+    localStorage.removeItem('kitchenCosmo_activeInventory');
   };
 
   const getChecklistStats = () => {
@@ -792,14 +807,24 @@ const Index = () => {
                           <p className="text-sm text-muted-foreground">Ответственный: {activeInventory.responsible}</p>
                           <p className="text-sm text-muted-foreground">Продуктов: {activeInventory.products.length}</p>
                         </div>
-                        <Button 
-                          variant="destructive" 
-                          size="sm"
-                          onClick={handleDeleteInventory}
-                        >
-                          <Icon name="Trash2" size={16} className="mr-2" />
-                          Удалить
-                        </Button>
+                        <div className="flex gap-2">
+                          <Button 
+                            variant="default" 
+                            size="sm"
+                            onClick={handleCompleteInventory}
+                          >
+                            <Icon name="CheckCircle" size={16} className="mr-2" />
+                            Завершить
+                          </Button>
+                          <Button 
+                            variant="destructive" 
+                            size="sm"
+                            onClick={handleDeleteInventory}
+                          >
+                            <Icon name="Trash2" size={16} className="mr-2" />
+                            Удалить
+                          </Button>
+                        </div>
                       </div>
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-3">
                         {activeInventory.products.slice(0, 8).map((p: any, i: number) => (
@@ -822,12 +847,19 @@ const Index = () => {
                         <Card key={inv.id} className="border-border/50">
                           <CardContent className="pt-6">
                             <div className="flex items-center justify-between">
-                              <div>
+                              <div className="flex-1">
                                 <p className="font-semibold">{inv.name}</p>
                                 <p className="text-sm text-muted-foreground">Ответственный: {inv.responsible}</p>
-                                <p className="text-sm text-muted-foreground">Продуктов: {inv.products.length}</p>
+                                <p className="text-sm text-muted-foreground">Продуктов: {inv.products.length} | Завершено: {inv.completedDate}</p>
                               </div>
-                              <Badge variant="outline">Завершено</Badge>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => setViewInventoryReport(inv)}
+                              >
+                                <Icon name="FileText" size={16} className="mr-2" />
+                                Отчёт
+                              </Button>
                             </div>
                           </CardContent>
                         </Card>
@@ -888,6 +920,69 @@ const Index = () => {
           </TabsContent>
 
 
+
+          <Dialog open={!!viewInventoryReport} onOpenChange={() => setViewInventoryReport(null)}>
+            <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Отчёт по инвентаризации</DialogTitle>
+              </DialogHeader>
+              {viewInventoryReport && (
+                <div className="space-y-4 pt-4">
+                  <div className="grid grid-cols-2 gap-4 p-4 rounded-lg bg-muted/30">
+                    <div>
+                      <Label className="text-muted-foreground">Название</Label>
+                      <p className="font-medium">{viewInventoryReport.name}</p>
+                    </div>
+                    <div>
+                      <Label className="text-muted-foreground">Дата завершения</Label>
+                      <p className="font-medium">{viewInventoryReport.completedDate}</p>
+                    </div>
+                    <div>
+                      <Label className="text-muted-foreground">Ответственный</Label>
+                      <p className="font-medium">{viewInventoryReport.responsible}</p>
+                    </div>
+                    <div>
+                      <Label className="text-muted-foreground">Всего позиций</Label>
+                      <p className="font-medium">{viewInventoryReport.products.length}</p>
+                    </div>
+                  </div>
+                  <div>
+                    <Label className="text-muted-foreground mb-2 block">Список продуктов</Label>
+                    <div className="border rounded-lg overflow-hidden">
+                      <table className="w-full">
+                        <thead className="bg-muted">
+                          <tr>
+                            <th className="text-left p-3 border-b">№</th>
+                            <th className="text-left p-3 border-b">Наименование</th>
+                            <th className="text-right p-3 border-b">Количество (г)</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {viewInventoryReport.products.map((product: any, idx: number) => (
+                            <tr key={idx} className="border-b last:border-0">
+                              <td className="p-3 text-muted-foreground">{idx + 1}</td>
+                              <td className="p-3">{product.name}</td>
+                              <td className="p-3 text-right font-medium">{product.quantity || '—'}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="outline" className="flex-1">
+                      <Icon name="Download" size={16} className="mr-2" />
+                      Скачать отчёт
+                    </Button>
+                    <Button variant="outline" className="flex-1">
+                      <Icon name="Printer" size={16} className="mr-2" />
+                      Печать
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </DialogContent>
+          </Dialog>
 
           <TabsContent value="orders" className="animate-fade-in">
             <Card>
