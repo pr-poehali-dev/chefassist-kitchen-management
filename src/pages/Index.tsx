@@ -230,7 +230,8 @@ const Index = () => {
           <ChecklistsTab 
             checklistList={checklistList} 
             setChecklistList={setChecklistList} 
-            isChefOrSousChef={isChefOrSousChef} 
+            isChefOrSousChef={isChefOrSousChef}
+            userName={user.name}
           />
 
           <InventoryTab 

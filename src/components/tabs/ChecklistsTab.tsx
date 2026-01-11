@@ -18,9 +18,10 @@ interface ChecklistsTabProps {
   checklistList: any[];
   setChecklistList: (list: any[]) => void;
   isChefOrSousChef: () => boolean;
+  userName: string;
 }
 
-export default function ChecklistsTab({ checklistList, setChecklistList, isChefOrSousChef }: ChecklistsTabProps) {
+export default function ChecklistsTab({ checklistList, setChecklistList, isChefOrSousChef, userName }: ChecklistsTabProps) {
   const [newChecklist, setNewChecklist] = useState({ name: '', workshop: '', items: '', responsible: '' });
   const [showChecklistStats, setShowChecklistStats] = useState(false);
   const [editingChecklist, setEditingChecklist] = useState<any>(null);
@@ -392,7 +393,11 @@ export default function ChecklistsTab({ checklistList, setChecklistList, isChefO
             </div>
           ) : (
             <div className="space-y-4">
-            {checklistList.length > 0 ? checklistList.map((checklist) => (
+            {(() => {
+              const filteredChecklists = checklistList.filter((checklist) => 
+                !checklist.responsible || checklist.responsible === userName
+              );
+              return filteredChecklists.length > 0 ? filteredChecklists.map((checklist) => (
               <Card key={checklist.id} className="border-border/50 hover:border-primary/50 transition-all">
                 <CardContent className="pt-6">
                   <div className="flex items-center justify-between mb-4">
@@ -453,12 +458,17 @@ export default function ChecklistsTab({ checklistList, setChecklistList, isChefO
                   </div>
                 </CardContent>
               </Card>
-            )) : (
-              <div className="text-center py-12">
-                <Icon name="ClipboardList" size={48} className="mx-auto text-muted-foreground mb-4" />
-                <p className="text-muted-foreground">Чек-листы ещё не созданы</p>
-              </div>
-            )}
+              )) : (
+                <div className="text-center py-12">
+                  <Icon name="ClipboardList" size={48} className="mx-auto text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground">
+                    {checklistList.length === 0 
+                      ? 'Чек-листы ещё не созданы' 
+                      : 'Нет чек-листов, где вы назначены ответственным'}
+                  </p>
+                </div>
+              );
+            })()}
             </div>
           )}
         </CardContent>
