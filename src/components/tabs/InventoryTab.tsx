@@ -34,26 +34,36 @@ export default function InventoryTab({
   userName
 }: InventoryTabProps) {
   const [inventoryProducts, setInventoryProducts] = useState<string>('');
+  const [inventorySemis, setInventorySemis] = useState<string>('');
+  const [inventoryDate, setInventoryDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [viewInventoryReport, setViewInventoryReport] = useState<any>(null);
   const [tempQuantities, setTempQuantities] = useState<{[key: number]: string}>({});
 
   const handleStartInventory = () => {
-    if (!inventoryProducts.trim()) return;
+    if (!inventoryProducts.trim() && !inventorySemis.trim()) return;
     const products = inventoryProducts.split('\n').filter(p => p.trim()).map(p => ({ 
-      name: p.trim(), 
+      name: p.trim(),
+      type: 'product',
       entries: [] // { user: string, quantity: number }[]
+    }));
+    const semis = inventorySemis.split('\n').filter(p => p.trim()).map(p => ({ 
+      name: p.trim(),
+      type: 'semi',
+      entries: []
     }));
     const inventory = {
       id: Date.now(),
-      name: `Инвентаризация ${new Date().toLocaleDateString()}`,
-      date: new Date().toISOString().split('T')[0],
+      name: `Инвентаризация ${new Date(inventoryDate).toLocaleDateString()}`,
+      date: inventoryDate,
       responsible: userName,
-      products,
+      products: [...products, ...semis],
       status: 'in_progress'
     };
     setActiveInventory(inventory);
     localStorage.setItem('kitchenCosmo_activeInventory', JSON.stringify(inventory));
     setInventoryProducts('');
+    setInventorySemis('');
+    setInventoryDate(new Date().toISOString().split('T')[0]);
   };
 
   const handleDeleteInventory = () => {
@@ -69,8 +79,11 @@ export default function InventoryTab({
   };
 
   const handleCopyFromHistory = (inv: any) => {
-    const productNames = inv.products.map((p: any) => p.name).join('\n');
-    setInventoryProducts(productNames);
+    const products = inv.products.filter((p: any) => p.type === 'product').map((p: any) => p.name).join('\n');
+    const semis = inv.products.filter((p: any) => p.type === 'semi').map((p: any) => p.name).join('\n');
+    setInventoryProducts(products);
+    setInventorySemis(semis);
+    setInventoryDate(inv.date);
   };
 
   const handleDeleteFromHistory = (invId: number) => {
@@ -138,13 +151,24 @@ export default function InventoryTab({
                         <DialogTitle>Новая инвентаризация</DialogTitle>
                       </DialogHeader>
                       <div className="space-y-4 pt-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="inv-responsible">Ответственный</Label>
-                          <Input id="inv-responsible" placeholder="ФИО сотрудника" value={userName} readOnly />
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="inv-responsible">Ответственный</Label>
+                            <Input id="inv-responsible" placeholder="ФИО сотрудника" value={userName} readOnly />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="inv-date">Дата инвентаризации</Label>
+                            <Input 
+                              id="inv-date" 
+                              type="date" 
+                              value={inventoryDate}
+                              onChange={(e) => setInventoryDate(e.target.value)}
+                            />
+                          </div>
                         </div>
                         <div className="space-y-2">
                           <div className="flex items-center justify-between mb-2">
-                            <Label htmlFor="inv-products">Перечень продуктов (каждый с новой строки)</Label>
+                            <Label htmlFor="inv-products">Продукты (каждый с новой строки)</Label>
                             {inventoryHistory.length > 0 && (
                               <Button 
                                 variant="ghost" 
@@ -160,9 +184,19 @@ export default function InventoryTab({
                           <Textarea 
                             id="inv-products" 
                             placeholder="Томаты&#10;Говядина&#10;Базилик&#10;Лосось&#10;Оливковое масло"
-                            rows={10}
+                            rows={6}
                             value={inventoryProducts}
                             onChange={(e) => setInventoryProducts(e.target.value)}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="inv-semis">Полуфабрикаты (каждый с новой строки)</Label>
+                          <Textarea 
+                            id="inv-semis" 
+                            placeholder="Фарш говяжий&#10;Тесто слоёное&#10;Бульон куриный&#10;Соус томатный"
+                            rows={6}
+                            value={inventorySemis}
+                            onChange={(e) => setInventorySemis(e.target.value)}
                           />
                         </div>
                         <Button className="w-full" onClick={handleStartInventory}>Начать инвентаризацию</Button>
@@ -198,6 +232,7 @@ export default function InventoryTab({
                 <div className="mb-4 p-4 rounded-lg bg-primary/5">
                   <p className="font-semibold">{activeInventory.name}</p>
                   <p className="text-sm text-muted-foreground">Ответственный: {activeInventory.responsible}</p>
+                  <p className="text-sm text-muted-foreground">Дата: {new Date(activeInventory.date).toLocaleDateString()}</p>
                 </div>
                 {getUserPendingProducts().map((item: any, idx: number) => {
                   const originalIdx = activeInventory.products.findIndex((p: any) => p.name === item.name);
@@ -206,10 +241,11 @@ export default function InventoryTab({
                     <div key={originalIdx} className="flex items-center justify-between p-4 rounded-lg border border-border/50 hover:border-border transition-all">
                       <div className="flex items-center gap-4 flex-1">
                         <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-primary/10 to-secondary/10 flex items-center justify-center">
-                          <Icon name="Package" size={24} className="text-primary" />
+                          <Icon name={item.type === 'semi' ? 'Soup' : 'Package'} size={24} className="text-primary" />
                         </div>
                         <div className="flex-1">
                           <p className="font-medium">{item.name}</p>
+                          <p className="text-xs text-muted-foreground">{item.type === 'semi' ? 'Полуфабрикат' : 'Продукт'}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
@@ -255,7 +291,8 @@ export default function InventoryTab({
                     <div>
                       <p className="font-semibold text-lg">{activeInventory.name}</p>
                       <p className="text-sm text-muted-foreground">Ответственный: {activeInventory.responsible}</p>
-                      <p className="text-sm text-muted-foreground">Продуктов: {activeInventory.products.length}</p>
+                      <p className="text-sm text-muted-foreground">Дата: {new Date(activeInventory.date).toLocaleDateString()}</p>
+                      <p className="text-sm text-muted-foreground">Всего позиций: {activeInventory.products.length}</p>
                     </div>
                     <div className="flex gap-2">
                       <Button 
@@ -294,7 +331,12 @@ export default function InventoryTab({
                         <CardContent className="pt-4 pb-4">
                           <div className="flex items-center justify-between">
                             <div className="flex-1">
-                              <p className="font-medium">{product.name}</p>
+                              <div className="flex items-center gap-2">
+                                <p className="font-medium">{product.name}</p>
+                                <Badge variant="outline" className="text-xs">
+                                  {product.type === 'semi' ? 'Полуфабрикат' : 'Продукт'}
+                                </Badge>
+                              </div>
                               {entriesCount > 0 ? (
                                 <div className="mt-1">
                                   <p className="text-sm text-muted-foreground">
