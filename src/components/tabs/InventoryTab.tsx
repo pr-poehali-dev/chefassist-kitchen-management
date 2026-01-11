@@ -45,12 +45,13 @@ export default function InventoryTab({
       type: 'semi',
       entries: []
     }));
+    const allProducts = [...products, ...semis].sort((a, b) => a.name.localeCompare(b.name, 'ru'));
     const inventory = {
       id: Date.now(),
       name: `Инвентаризация ${new Date(inventoryDate).toLocaleDateString()}`,
       date: inventoryDate,
       responsible: userName,
-      products: [...products, ...semis],
+      products: allProducts,
       status: 'in_progress'
     };
     setActiveInventory(inventory);
@@ -136,10 +137,12 @@ export default function InventoryTab({
 
   const getUserPendingProducts = () => {
     if (!activeInventory) return [];
-    return activeInventory.products.filter((p: any) => {
-      if (!p.entries || p.entries.length === 0) return true;
-      return !p.entries.some((e: any) => e.user === userName);
-    });
+    return activeInventory.products
+      .filter((p: any) => {
+        if (!p.entries || p.entries.length === 0) return true;
+        return !p.entries.some((e: any) => e.user === userName);
+      })
+      .sort((a: any, b: any) => a.name.localeCompare(b.name, 'ru'));
   };
 
   const handleCompleteInventory = () => {

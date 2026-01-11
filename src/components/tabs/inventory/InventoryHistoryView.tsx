@@ -117,7 +117,7 @@ export default function InventoryHistoryView({
                       </tr>
                     </thead>
                     <tbody>
-                      {viewInventoryReport.products.map((product: any, idx: number) => {
+                      {[...viewInventoryReport.products].sort((a: any, b: any) => a.name.localeCompare(b.name, 'ru')).map((product: any, idx: number) => {
                         const totalQuantity = product.entries && product.entries.length > 0 
                           ? product.entries.reduce((sum: number, e: any) => sum + e.quantity, 0)
                           : 0;

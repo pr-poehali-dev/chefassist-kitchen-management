@@ -47,7 +47,7 @@ export default function ChefInventoryView({
 
       <div className="space-y-3">
         <h3 className="font-semibold text-sm text-muted-foreground">Статистика внесения данных</h3>
-        {activeInventory.products.map((product: any, idx: number) => {
+        {[...activeInventory.products].sort((a: any, b: any) => a.name.localeCompare(b.name, 'ru')).map((product: any, idx: number) => {
           const entriesCount = product.entries ? product.entries.length : 0;
           const totalQuantity = product.entries && product.entries.length > 0 
             ? product.entries.reduce((sum: number, e: any) => sum + e.quantity, 0)
