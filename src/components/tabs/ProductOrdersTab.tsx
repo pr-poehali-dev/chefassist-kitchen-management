@@ -399,8 +399,8 @@ const ProductOrdersTab = ({ restaurantId, userId, isChefOrSousChef }: ProductOrd
           )}
         </TabsList>
 
-        {isChefOrSousChef() ? (
-          <>
+        <TabsContent value="orders" className="space-y-4 mt-0">
+          {isChefOrSousChef() ? (
             <OrdersListView
               activeOrders={activeOrders}
               loading={loading}
@@ -408,27 +408,7 @@ const ProductOrdersTab = ({ restaurantId, userId, isChefOrSousChef }: ProductOrd
               handleUpdateOrderStatus={handleUpdateOrderStatus}
               setShowCreateOrderDialog={setShowCreateOrderDialog}
             />
-
-            <ProductMatrixView
-              categories={categories}
-              products={products}
-              showCategoryDialog={showCategoryDialog}
-              setShowCategoryDialog={setShowCategoryDialog}
-              showProductDialog={showProductDialog}
-              setShowProductDialog={setShowProductDialog}
-              newCategoryName={newCategoryName}
-              setNewCategoryName={setNewCategoryName}
-              newProduct={newProduct}
-              setNewProduct={setNewProduct}
-              handleCreateCategory={handleCreateCategory}
-              handleCreateProduct={handleCreateProduct}
-              handleDeleteCategory={handleDeleteCategory}
-              handleDeleteProduct={handleDeleteProduct}
-              handleEditCategory={handleEditCategory}
-            />
-          </>
-        ) : (
-          <TabsContent value="orders" className="space-y-4 mt-0">
+          ) : (
             <CookProductsList
               categories={categories}
               products={products}
@@ -437,10 +417,38 @@ const ProductOrdersTab = ({ restaurantId, userId, isChefOrSousChef }: ProductOrd
               onToggleProduct={handleToggleProduct}
               onCreateOrder={handleCreateOrder}
             />
-          </TabsContent>
+          )}
+        </TabsContent>
+
+        {isChefOrSousChef() && (
+          <ProductMatrixView
+            categories={categories}
+            products={products}
+            showCategoryDialog={showCategoryDialog}
+            setShowCategoryDialog={setShowCategoryDialog}
+            showProductDialog={showProductDialog}
+            setShowProductDialog={setShowProductDialog}
+            newCategoryName={newCategoryName}
+            setNewCategoryName={setNewCategoryName}
+            newProduct={newProduct}
+            setNewProduct={setNewProduct}
+            handleCreateCategory={handleCreateCategory}
+            handleCreateProduct={handleCreateProduct}
+            handleDeleteCategory={handleDeleteCategory}
+            handleDeleteProduct={handleDeleteProduct}
+            handleEditCategory={handleEditCategory}
+          />
         )}
       </Tabs>
 
+      <CreateOrderDialog
+        showCreateOrderDialog={showCreateOrderDialog}
+        setShowCreateOrderDialog={setShowCreateOrderDialog}
+        productsByCategoryForOrder={productsByCategoryForOrder}
+        selectedProducts={selectedProducts}
+        handleToggleProduct={handleToggleProduct}
+        handleCreateOrder={handleCreateOrder}
+      />
 
     </TabsContent>
   );

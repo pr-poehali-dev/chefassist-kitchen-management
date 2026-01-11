@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { TabsContent } from '@/components/ui/tabs';
+
 import Icon from '@/components/ui/icon';
 
 interface OrderItem {
@@ -57,7 +57,7 @@ const OrdersListView = ({
   };
 
   return (
-    <TabsContent value="orders" className="space-y-4 mt-0">
+    <div className="space-y-4">
       {loading ? (
         <Card>
           <CardContent className="pt-6 text-center">
@@ -69,11 +69,9 @@ const OrdersListView = ({
           <CardContent className="pt-6 text-center">
             <Icon name="ShoppingCart" size={48} className="mx-auto text-muted-foreground mb-4" />
             <p className="text-muted-foreground mb-4">Нет активных заявок</p>
-            {!isChefOrSousChef && (
-              <Button onClick={() => setShowCreateOrderDialog(true)}>
-                Создать первую заявку
-              </Button>
-            )}
+            <Button onClick={() => setShowCreateOrderDialog(true)}>
+              Создать первую заявку
+            </Button>
           </CardContent>
         </Card>
       ) : (
@@ -131,7 +129,16 @@ const OrdersListView = ({
           ))}
         </div>
       )}
-    </TabsContent>
+      
+      {activeOrders.length > 0 && (
+        <div className="flex justify-center pt-4">
+          <Button onClick={() => setShowCreateOrderDialog(true)} size="lg" className="gap-2">
+            <Icon name="Plus" size={18} />
+            Создать новую заявку
+          </Button>
+        </div>
+      )}
+    </div>
   );
 };
 
