@@ -383,57 +383,61 @@ const ProductOrdersTab = ({ restaurantId, userId, isChefOrSousChef }: ProductOrd
         </div>
       </div>
 
-      {isChefOrSousChef() ? (
-        <Tabs value={activeSubTab} onValueChange={(v) => setActiveSubTab(v as 'orders' | 'matrix')} className="space-y-4">
-          <TabsList className="grid w-full grid-cols-2 sm:w-auto sm:inline-grid">
-            <TabsTrigger value="orders" className="gap-2">
-              <Icon name="ShoppingCart" size={16} />
-              <span>Заявки</span>
-              {activeOrders.length > 0 && <Badge variant="secondary" className="ml-1">{activeOrders.length}</Badge>}
-            </TabsTrigger>
+      <Tabs value={activeSubTab} onValueChange={(v) => setActiveSubTab(v as 'orders' | 'matrix')} className="space-y-4">
+        <TabsList className="grid w-full grid-cols-2 sm:w-auto sm:inline-grid">
+          <TabsTrigger value="orders" className="gap-2">
+            <Icon name="ShoppingCart" size={16} />
+            <span>Заявки</span>
+            {activeOrders.length > 0 && <Badge variant="secondary" className="ml-1">{activeOrders.length}</Badge>}
+          </TabsTrigger>
+          {isChefOrSousChef() && (
             <TabsTrigger value="matrix" className="gap-2">
               <Icon name="Package" size={16} />
               <span>Матрица</span>
               <Badge variant="secondary" className="ml-1">{products.length}</Badge>
             </TabsTrigger>
-          </TabsList>
+          )}
+        </TabsList>
 
-          <OrdersListView
-            activeOrders={activeOrders}
-            loading={loading}
-            isChefOrSousChef={true}
-            handleUpdateOrderStatus={handleUpdateOrderStatus}
-            setShowCreateOrderDialog={setShowCreateOrderDialog}
-          />
+        {isChefOrSousChef() ? (
+          <>
+            <OrdersListView
+              activeOrders={activeOrders}
+              loading={loading}
+              isChefOrSousChef={true}
+              handleUpdateOrderStatus={handleUpdateOrderStatus}
+              setShowCreateOrderDialog={setShowCreateOrderDialog}
+            />
 
-          <ProductMatrixView
+            <ProductMatrixView
+              categories={categories}
+              products={products}
+              showCategoryDialog={showCategoryDialog}
+              setShowCategoryDialog={setShowCategoryDialog}
+              showProductDialog={showProductDialog}
+              setShowProductDialog={setShowProductDialog}
+              newCategoryName={newCategoryName}
+              setNewCategoryName={setNewCategoryName}
+              newProduct={newProduct}
+              setNewProduct={setNewProduct}
+              handleCreateCategory={handleCreateCategory}
+              handleCreateProduct={handleCreateProduct}
+              handleDeleteCategory={handleDeleteCategory}
+              handleDeleteProduct={handleDeleteProduct}
+              handleEditCategory={handleEditCategory}
+            />
+          </>
+        ) : (
+          <CookProductsList
             categories={categories}
             products={products}
-            showCategoryDialog={showCategoryDialog}
-            setShowCategoryDialog={setShowCategoryDialog}
-            showProductDialog={showProductDialog}
-            setShowProductDialog={setShowProductDialog}
-            newCategoryName={newCategoryName}
-            setNewCategoryName={setNewCategoryName}
-            newProduct={newProduct}
-            setNewProduct={setNewProduct}
-            handleCreateCategory={handleCreateCategory}
-            handleCreateProduct={handleCreateProduct}
-            handleDeleteCategory={handleDeleteCategory}
-            handleDeleteProduct={handleDeleteProduct}
-            handleEditCategory={handleEditCategory}
+            activeOrders={activeOrders}
+            selectedProducts={selectedProducts}
+            onToggleProduct={handleToggleProduct}
+            onCreateOrder={handleCreateOrder}
           />
-        </Tabs>
-      ) : (
-        <CookProductsList
-          categories={categories}
-          products={products}
-          activeOrders={activeOrders}
-          selectedProducts={selectedProducts}
-          onToggleProduct={handleToggleProduct}
-          onCreateOrder={handleCreateOrder}
-        />
-      )}
+        )}
+      </Tabs>
 
 
     </TabsContent>
