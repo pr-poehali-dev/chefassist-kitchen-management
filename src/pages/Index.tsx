@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -12,6 +12,7 @@ import ChecklistsTab from '@/components/tabs/ChecklistsTab';
 import InventoryTab from '@/components/tabs/InventoryTab';
 import EmployeesTab from '@/components/tabs/EmployeesTab';
 import { OrdersTab, WriteoffTab } from '@/components/tabs/OrdersAndWriteoffTabs';
+import { toast } from 'sonner';
 import {
   Dialog,
   DialogContent,
@@ -83,6 +84,39 @@ const Index = () => {
 
   const [showWorkshopReport, setShowWorkshopReport] = useState(false);
   const [expandedStatus, setExpandedStatus] = useState<{workshop: string, status: string} | null>(null);
+  const [notifiedIssues, setNotifiedIssues] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    checklistList.forEach(checklist => {
+      checklist.items.forEach((item: any) => {
+        const itemKey = `${checklist.id}-${item.id}`;
+        if ((item.status === 'in_restriction' || item.status === 'in_stop') && !notifiedIssues.has(itemKey)) {
+          const statusText = item.status === 'in_restriction' ? 'В ограничении' : 'В стопе';
+          toast.error(`${statusText}: ${item.text}`, {
+            description: `Цех: ${checklist.workshop} | Чек-лист: ${checklist.name}`,
+            duration: 8000,
+          });
+          setNotifiedIssues(prev => new Set(prev).add(itemKey));
+        }
+      });
+    });
+  }, [checklistList]);
+
+  useEffect(() => {
+    const lowStock = mockIngredients.filter(item => item.quantity < item.minStock);
+    if (lowStock.length > 0) {
+      lowStock.forEach(item => {
+        const itemKey = `inventory-${item.id}`;
+        if (!notifiedIssues.has(itemKey)) {
+          toast.warning(`Низкий остаток: ${item.name}`, {
+            description: `Осталось: ${item.quantity}${item.unit}, минимум: ${item.minStock}${item.unit}`,
+            duration: 6000,
+          });
+          setNotifiedIssues(prev => new Set(prev).add(itemKey));
+        }
+      });
+    }
+  }, [activeInventory]);
 
   const lowStockItems = mockIngredients.filter(item => item.quantity < item.minStock);
   const totalInventoryValue = mockIngredients.reduce((sum, item) => sum + (item.quantity * item.price), 0);
