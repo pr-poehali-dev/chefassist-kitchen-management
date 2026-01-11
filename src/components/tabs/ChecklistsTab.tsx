@@ -38,7 +38,7 @@ export default function ChecklistsTab({ checklistList, setChecklistList, isChefO
     const updated = checklistList.map(cl => {
       if (cl.id === checklistId) {
         const items = [...cl.items];
-        items[itemIndex] = { ...items[itemIndex], status: newStatus };
+        items[itemIndex] = { ...items[itemIndex], status: newStatus, timestamp: new Date().toISOString() };
         const completedDate = new Date().toISOString().split('T')[0];
         return { ...cl, items, completedDate };
       }
@@ -53,13 +53,15 @@ export default function ChecklistsTab({ checklistList, setChecklistList, isChefO
     checklistList.forEach(cl => {
       if (!stats[cl.workshop]) stats[cl.workshop] = [];
       const completed = cl.items.filter((i: any) => i.status === 'done').length;
+      const inRestriction = cl.items.filter((i: any) => i.status === 'in_restriction').length;
       const inStop = cl.items.filter((i: any) => i.status === 'in_stop').length;
       stats[cl.workshop].push({
         name: cl.name,
         date: cl.completedDate || 'Не заполнен',
         completed,
-        total: cl.items.length,
-        inStop
+        inRestriction,
+        inStop,
+        total: cl.items.length
       });
     });
     return stats;
@@ -102,7 +104,10 @@ export default function ChecklistsTab({ checklistList, setChecklistList, isChefO
                                         <p className="text-sm text-muted-foreground">Дата: {item.date}</p>
                                       </div>
                                       <div className="text-right">
-                                        <p className="text-sm">Выполнено: {item.completed}/{item.total}</p>
+                                        <p className="text-sm text-green-600">Готово: {item.completed}/{item.total}</p>
+                                        {item.inRestriction > 0 && (
+                                          <p className="text-xs text-orange-600">В ограничении: {item.inRestriction}</p>
+                                        )}
                                         {item.inStop > 0 && (
                                           <p className="text-xs text-destructive">В стопе: {item.inStop}</p>
                                         )}
@@ -193,10 +198,12 @@ export default function ChecklistsTab({ checklistList, setChecklistList, isChefO
                         <div className="flex gap-2 ml-4">
                           <div className={`w-2 h-2 rounded-full ${
                             item.status === 'done' ? 'bg-green-500' : 
+                            item.status === 'in_restriction' ? 'bg-orange-500' :
                             item.status === 'in_stop' ? 'bg-destructive' : 'bg-muted'
                           }`} />
-                          <span className="text-xs text-muted-foreground min-w-[60px]">
+                          <span className="text-xs text-muted-foreground min-w-[80px]">
                             {item.status === 'done' ? 'Готово' : 
+                             item.status === 'in_restriction' ? 'В огранич.' :
                              item.status === 'in_stop' ? 'В стопе' : 'Ожидает'}
                           </span>
                         </div>
@@ -239,6 +246,15 @@ export default function ChecklistsTab({ checklistList, setChecklistList, isChefO
                           >
                             <Icon name="Check" size={14} className="mr-1" />
                             Готово
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            variant={item.status === 'in_restriction' ? 'default' : 'outline'}
+                            className="h-8 px-3 bg-orange-500 hover:bg-orange-600 text-white"
+                            onClick={() => handleToggleChecklistItem(checklist.id, idx, 'in_restriction')}
+                          >
+                            <Icon name="AlertTriangle" size={14} className="mr-1" />
+                            В огр.
                           </Button>
                           <Button 
                             size="sm" 
