@@ -51,6 +51,12 @@ def handler(event: dict, context) -> dict:
                 return update_order_item(body)
             elif action == 'update_order_status':
                 return update_order_status(body)
+            elif action == 'delete_category':
+                return delete_category(body)
+            elif action == 'delete_product':
+                return delete_product(body)
+            elif action == 'update_category':
+                return update_category(body)
         
         return {
             'statusCode': 400,
@@ -274,6 +280,71 @@ def update_order_status(body: dict) -> dict:
     cur.execute(
         "UPDATE product_orders SET status = %s, updated_at = CURRENT_TIMESTAMP WHERE id = %s",
         (status, order_id)
+    )
+    
+    conn.commit()
+    cur.close()
+    conn.close()
+    
+    return {
+        'statusCode': 200,
+        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+        'body': json.dumps({'success': True}),
+        'isBase64Encoded': False
+    }
+
+def delete_category(body: dict) -> dict:
+    '''Удаление категории'''
+    category_id = body.get('categoryId')
+    
+    conn = get_db_connection()
+    cur = conn.cursor()
+    
+    cur.execute("DELETE FROM products WHERE category_id = %s", (category_id,))
+    cur.execute("DELETE FROM product_categories WHERE id = %s", (category_id,))
+    
+    conn.commit()
+    cur.close()
+    conn.close()
+    
+    return {
+        'statusCode': 200,
+        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+        'body': json.dumps({'success': True}),
+        'isBase64Encoded': False
+    }
+
+def delete_product(body: dict) -> dict:
+    '''Удаление продукта'''
+    product_id = body.get('productId')
+    
+    conn = get_db_connection()
+    cur = conn.cursor()
+    
+    cur.execute("DELETE FROM products WHERE id = %s", (product_id,))
+    
+    conn.commit()
+    cur.close()
+    conn.close()
+    
+    return {
+        'statusCode': 200,
+        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+        'body': json.dumps({'success': True}),
+        'isBase64Encoded': False
+    }
+
+def update_category(body: dict) -> dict:
+    '''Обновление названия категории'''
+    category_id = body.get('categoryId')
+    name = body.get('name')
+    
+    conn = get_db_connection()
+    cur = conn.cursor()
+    
+    cur.execute(
+        "UPDATE product_categories SET name = %s WHERE id = %s",
+        (name, category_id)
     )
     
     conn.commit()

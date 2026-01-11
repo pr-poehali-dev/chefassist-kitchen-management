@@ -277,6 +277,77 @@ const ProductOrdersTab = ({ restaurantId, userId, isChefOrSousChef }: ProductOrd
     }
   };
 
+  const handleDeleteCategory = async (categoryId: number) => {
+    if (!confirm('Удалить категорию? Все продукты в ней тоже удалятся.')) return;
+    
+    try {
+      const response = await fetch(`${PRODUCTS_API_URL}?action=delete_category`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ categoryId })
+      });
+      
+      if (response.ok) {
+        toast.success('Категория удалена');
+        await loadCategories();
+        await loadProducts();
+      } else {
+        toast.error('Ошибка при удалении категории');
+      }
+    } catch (error) {
+      console.error('Error deleting category:', error);
+      toast.error('Ошибка при удалении категории');
+    }
+  };
+
+  const handleDeleteProduct = async (productId: number) => {
+    if (!confirm('Удалить продукт?')) return;
+    
+    try {
+      const response = await fetch(`${PRODUCTS_API_URL}?action=delete_product`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId })
+      });
+      
+      if (response.ok) {
+        toast.success('Продукт удален');
+        await loadProducts();
+      } else {
+        toast.error('Ошибка при удалении продукта');
+      }
+    } catch (error) {
+      console.error('Error deleting product:', error);
+      toast.error('Ошибка при удалении продукта');
+    }
+  };
+
+  const handleEditCategory = async (categoryId: number, newName: string) => {
+    if (!newName.trim()) {
+      toast.error('Введите название категории');
+      return;
+    }
+    
+    try {
+      const response = await fetch(`${PRODUCTS_API_URL}?action=update_category`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ categoryId, name: newName.trim() })
+      });
+      
+      if (response.ok) {
+        toast.success('Категория обновлена');
+        await loadCategories();
+        await loadProducts();
+      } else {
+        toast.error('Ошибка при обновлении категории');
+      }
+    } catch (error) {
+      console.error('Error updating category:', error);
+      toast.error('Ошибка при обновлении категории');
+    }
+  };
+
   const productsByCategoryForOrder = products.reduce((acc, product) => {
     if (!acc[product.category_name]) {
       acc[product.category_name] = [];
@@ -348,6 +419,9 @@ const ProductOrdersTab = ({ restaurantId, userId, isChefOrSousChef }: ProductOrd
             setNewProduct={setNewProduct}
             handleCreateCategory={handleCreateCategory}
             handleCreateProduct={handleCreateProduct}
+            handleDeleteCategory={handleDeleteCategory}
+            handleDeleteProduct={handleDeleteProduct}
+            handleEditCategory={handleEditCategory}
           />
         </Tabs>
       ) : (

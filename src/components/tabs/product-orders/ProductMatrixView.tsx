@@ -5,6 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { TabsContent } from '@/components/ui/tabs';
 import Icon from '@/components/ui/icon';
+import { useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -48,6 +49,9 @@ interface ProductMatrixViewProps {
   setNewProduct: (product: { name: string; unit: string; categoryId: string; newCategoryName: string }) => void;
   handleCreateCategory: () => void;
   handleCreateProduct: () => void;
+  handleDeleteCategory: (categoryId: number) => void;
+  handleDeleteProduct: (productId: number) => void;
+  handleEditCategory: (categoryId: number, newName: string) => void;
 }
 
 const ProductMatrixView = ({
@@ -63,7 +67,12 @@ const ProductMatrixView = ({
   setNewProduct,
   handleCreateCategory,
   handleCreateProduct,
+  handleDeleteCategory,
+  handleDeleteProduct,
+  handleEditCategory,
 }: ProductMatrixViewProps) => {
+  const [editingCategoryId, setEditingCategoryId] = useState<number | null>(null);
+  const [editingCategoryName, setEditingCategoryName] = useState('');
   const productsByCategory = categories.map(category => ({
     category,
     products: products.filter(p => p.category_id === category.id)
@@ -90,11 +99,71 @@ const ProductMatrixView = ({
             {productsByCategory.map(({ category, products: categoryProducts }) => (
               <Card key={category.id}>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-lg">
-                    <Icon name="FolderOpen" size={20} />
-                    {category.name}
-                    <Badge variant="secondary" className="ml-auto">{categoryProducts.length}</Badge>
-                  </CardTitle>
+                  <div className="flex items-center justify-between">
+                    {editingCategoryId === category.id ? (
+                      <div className="flex items-center gap-2 flex-1">
+                        <Input
+                          value={editingCategoryName}
+                          onChange={(e) => setEditingCategoryName(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              handleEditCategory(category.id, editingCategoryName);
+                              setEditingCategoryId(null);
+                            } else if (e.key === 'Escape') {
+                              setEditingCategoryId(null);
+                            }
+                          }}
+                          className="h-8"
+                          autoFocus
+                        />
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => {
+                            handleEditCategory(category.id, editingCategoryName);
+                            setEditingCategoryId(null);
+                          }}
+                        >
+                          <Icon name="Check" size={16} />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => setEditingCategoryId(null)}
+                        >
+                          <Icon name="X" size={16} />
+                        </Button>
+                      </div>
+                    ) : (
+                      <CardTitle className="flex items-center gap-2 text-lg">
+                        <Icon name="FolderOpen" size={20} />
+                        {category.name}
+                        <Badge variant="secondary" className="ml-auto">{categoryProducts.length}</Badge>
+                      </CardTitle>
+                    )}
+                    {editingCategoryId !== category.id && (
+                      <div className="flex items-center gap-1">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => {
+                            setEditingCategoryId(category.id);
+                            setEditingCategoryName(category.name);
+                          }}
+                        >
+                          <Icon name="Pencil" size={16} />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleDeleteCategory(category.id)}
+                          className="text-destructive hover:text-destructive"
+                        >
+                          <Icon name="Trash2" size={16} />
+                        </Button>
+                      </div>
+                    )}
+                  </div>
                 </CardHeader>
                 <CardContent>
                   {categoryProducts.length === 0 ? (
@@ -102,9 +171,19 @@ const ProductMatrixView = ({
                   ) : (
                     <div className="space-y-2">
                       {categoryProducts.map(product => (
-                        <div key={product.id} className="flex items-center justify-between p-2 rounded-lg bg-muted/50">
+                        <div key={product.id} className="flex items-center justify-between p-2 rounded-lg bg-muted/50 group">
                           <span className="text-sm font-medium">{product.name}</span>
-                          <Badge variant="outline" className="text-xs">{product.unit}</Badge>
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline" className="text-xs">{product.unit}</Badge>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleDeleteProduct(product.id)}
+                              className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive"
+                            >
+                              <Icon name="Trash2" size={14} />
+                            </Button>
+                          </div>
                         </div>
                       ))}
                     </div>
