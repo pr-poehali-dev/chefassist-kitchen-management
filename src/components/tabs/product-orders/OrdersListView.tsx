@@ -30,6 +30,8 @@ interface OrdersListViewProps {
   isChefOrSousChef: boolean;
   handleUpdateOrderStatus: (orderId: number, newStatus: string) => void;
   setShowCreateOrderDialog: (show: boolean) => void;
+  handleDeleteOrder: (orderId: number) => void;
+  orderStats: { pending: number; ordered: number; completed: number; total: number };
 }
 
 const OrdersListView = ({
@@ -38,6 +40,8 @@ const OrdersListView = ({
   isChefOrSousChef,
   handleUpdateOrderStatus,
   setShowCreateOrderDialog,
+  handleDeleteOrder,
+  orderStats,
 }: OrdersListViewProps) => {
   const pendingOrders = activeOrders.filter(o => o.status === 'pending');
   const orderedOrders = activeOrders.filter(o => o.status === 'ordered');
@@ -61,6 +65,45 @@ const OrdersListView = ({
 
   return (
     <div className="space-y-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="bg-card border rounded-lg p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-muted-foreground">Всего заявок</p>
+              <p className="text-2xl font-bold">{orderStats.total}</p>
+            </div>
+            <Icon name="FileText" size={24} className="text-muted-foreground" />
+          </div>
+        </div>
+        <div className="bg-card border rounded-lg p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-muted-foreground">Ожидают</p>
+              <p className="text-2xl font-bold text-yellow-600">{orderStats.pending}</p>
+            </div>
+            <Icon name="Clock" size={24} className="text-yellow-600" />
+          </div>
+        </div>
+        <div className="bg-card border rounded-lg p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-muted-foreground">Заказано</p>
+              <p className="text-2xl font-bold text-blue-600">{orderStats.ordered}</p>
+            </div>
+            <Icon name="ShoppingCart" size={24} className="text-blue-600" />
+          </div>
+        </div>
+        <div className="bg-card border rounded-lg p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-muted-foreground">Выполнено</p>
+              <p className="text-2xl font-bold text-green-600">{orderStats.completed}</p>
+            </div>
+            <Icon name="CheckCircle2" size={24} className="text-green-600" />
+          </div>
+        </div>
+      </div>
+
       {loading ? (
         <Card>
           <CardContent className="pt-6 text-center">
@@ -99,9 +142,19 @@ const OrdersListView = ({
                         <div className="flex items-center gap-2">
                           {getStatusBadge(order.status)}
                           {isChefOrSousChef && (
-                            <Button size="sm" onClick={() => handleUpdateOrderStatus(order.id, 'ordered')}>
-                              Заказано
-                            </Button>
+                            <>
+                              <Button size="sm" onClick={() => handleUpdateOrderStatus(order.id, 'ordered')}>
+                                Заказано
+                              </Button>
+                              <Button 
+                                size="sm" 
+                                variant="ghost" 
+                                onClick={() => handleDeleteOrder(order.id)}
+                                className="text-destructive hover:text-destructive"
+                              >
+                                <Icon name="Trash2" size={16} />
+                              </Button>
+                            </>
                           )}
                         </div>
                       </div>
@@ -161,9 +214,19 @@ const OrdersListView = ({
                         <div className="flex items-center gap-2">
                           {getStatusBadge(order.status)}
                           {isChefOrSousChef && (
-                            <Button size="sm" variant="outline" onClick={() => handleUpdateOrderStatus(order.id, 'completed')}>
-                              Выполнено
-                            </Button>
+                            <>
+                              <Button size="sm" variant="outline" onClick={() => handleUpdateOrderStatus(order.id, 'completed')}>
+                                Выполнено
+                              </Button>
+                              <Button 
+                                size="sm" 
+                                variant="ghost" 
+                                onClick={() => handleDeleteOrder(order.id)}
+                                className="text-destructive hover:text-destructive"
+                              >
+                                <Icon name="Trash2" size={16} />
+                              </Button>
+                            </>
                           )}
                         </div>
                       </div>
@@ -220,7 +283,19 @@ const OrdersListView = ({
                             От {order.creator_name} • {new Date(order.created_at).toLocaleDateString('ru-RU')}
                           </p>
                         </div>
-                        {getStatusBadge(order.status)}
+                        <div className="flex items-center gap-2">
+                          {getStatusBadge(order.status)}
+                          {isChefOrSousChef && (
+                            <Button 
+                              size="sm" 
+                              variant="ghost" 
+                              onClick={() => handleDeleteOrder(order.id)}
+                              className="text-destructive hover:text-destructive"
+                            >
+                              <Icon name="Trash2" size={16} />
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     </CardHeader>
                     <CardContent>

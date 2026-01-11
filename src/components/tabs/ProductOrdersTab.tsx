@@ -348,6 +348,28 @@ const ProductOrdersTab = ({ restaurantId, userId, isChefOrSousChef }: ProductOrd
     }
   };
 
+  const handleDeleteOrder = async (orderId: number) => {
+    if (!confirm('Удалить заявку?')) return;
+    
+    try {
+      const response = await fetch(`${PRODUCTS_API_URL}?action=delete_order`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId })
+      });
+      
+      if (response.ok) {
+        toast.success('Заявка удалена');
+        await loadOrders();
+      } else {
+        toast.error('Ошибка при удалении заявки');
+      }
+    } catch (error) {
+      console.error('Error deleting order:', error);
+      toast.error('Ошибка при удалении заявки');
+    }
+  };
+
   const productsByCategoryForOrder = products.reduce((acc, product) => {
     if (!acc[product.category_name]) {
       acc[product.category_name] = [];
@@ -357,6 +379,13 @@ const ProductOrdersTab = ({ restaurantId, userId, isChefOrSousChef }: ProductOrd
   }, {} as {[key: string]: Product[]});
 
   const activeOrders = orders;
+  
+  const orderStats = {
+    pending: orders.filter(o => o.status === 'pending').length,
+    ordered: orders.filter(o => o.status === 'ordered').length,
+    completed: orders.filter(o => o.status === 'completed').length,
+    total: orders.length
+  };
 
   return (
     <TabsContent value="products" className="space-y-4">
@@ -407,6 +436,8 @@ const ProductOrdersTab = ({ restaurantId, userId, isChefOrSousChef }: ProductOrd
               isChefOrSousChef={true}
               handleUpdateOrderStatus={handleUpdateOrderStatus}
               setShowCreateOrderDialog={setShowCreateOrderDialog}
+              handleDeleteOrder={handleDeleteOrder}
+              orderStats={orderStats}
             />
           ) : (
             <CookProductsList

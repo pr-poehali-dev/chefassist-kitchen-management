@@ -57,6 +57,8 @@ def handler(event: dict, context) -> dict:
                 return delete_product(body)
             elif action == 'update_category':
                 return update_category(body)
+            elif action == 'delete_order':
+                return delete_order(body)
         
         return {
             'statusCode': 400,
@@ -346,6 +348,27 @@ def update_category(body: dict) -> dict:
         "UPDATE product_categories SET name = %s WHERE id = %s",
         (name, category_id)
     )
+    
+    conn.commit()
+    cur.close()
+    conn.close()
+    
+    return {
+        'statusCode': 200,
+        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+        'body': json.dumps({'success': True}),
+        'isBase64Encoded': False
+    }
+
+def delete_order(body: dict) -> dict:
+    '''Удаление заявки'''
+    order_id = body.get('orderId')
+    
+    conn = get_db_connection()
+    cur = conn.cursor()
+    
+    cur.execute("DELETE FROM product_order_items WHERE order_id = %s", (order_id,))
+    cur.execute("DELETE FROM product_orders WHERE id = %s", (order_id,))
     
     conn.commit()
     cur.close()
