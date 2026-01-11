@@ -26,6 +26,30 @@ const Index = () => {
   }
   const [activeTab, setActiveTab] = useState('ttk');
   const [searchQuery, setSearchQuery] = useState('');
+  const [ttkList, setTtkList] = useState(() => {
+    const saved = localStorage.getItem('kitchenCosmo_ttk');
+    return saved ? JSON.parse(saved) : [
+      { id: 1, name: 'Стейк с овощами гриль', category: 'Основные блюда', output: 300, ingredients: 'Говядина 300г\nТрюфельное масло 10мл', tech: 'Разогреть сковороду...' },
+      { id: 2, name: 'Паста Карбонара', category: 'Паста', output: 350, ingredients: 'Паста 250г\nСливки 100мл', tech: 'Отварить пасту...' },
+    ];
+  });
+  const [newTtk, setNewTtk] = useState({ name: '', category: '', output: '', ingredients: '', tech: '' });
+  const [checklistList, setChecklistList] = useState(() => {
+    const saved = localStorage.getItem('kitchenCosmo_checklists');
+    return saved ? JSON.parse(saved) : [
+      { 
+        id: 1, 
+        name: 'Открытие горячего цеха', 
+        workshop: 'Горячий цех',
+        items: [
+          { text: 'Проверить температуру плит', status: 'done' },
+          { text: 'Проверить чистоту рабочих поверхностей', status: 'done' },
+          { text: 'Проверить наличие инвентаря', status: 'in_stop' },
+        ]
+      },
+    ];
+  });
+  const [newChecklist, setNewChecklist] = useState({ name: '', workshop: '', items: '' });
 
   const mockIngredients = [
     { id: 1, name: 'Томаты', category: 'Овощи', quantity: 15, unit: 'кг', minStock: 10, price: 120 },
@@ -35,12 +59,7 @@ const Index = () => {
     { id: 5, name: 'Лосось', category: 'Рыба', quantity: 6, unit: 'кг', minStock: 8, price: 1200 },
   ];
 
-  const mockRecipes = [
-    { id: 1, name: 'Стейк с овощами гриль', cost: 520, category: 'Основные блюда', popularity: 95 },
-    { id: 2, name: 'Паста Карбонара', cost: 280, category: 'Паста', popularity: 88 },
-    { id: 3, name: 'Лосось терияки', cost: 680, category: 'Рыба', popularity: 92 },
-    { id: 4, name: 'Капрезе салат', cost: 240, category: 'Салаты', popularity: 75 },
-  ];
+  const mockRecipes = ttkList;
 
   const mockOrders = [
     { id: 1, supplier: 'Мясной двор', status: 'pending', items: 5, total: 12500, date: '2026-01-15' },
@@ -50,6 +69,44 @@ const Index = () => {
 
   const lowStockItems = mockIngredients.filter(item => item.quantity < item.minStock);
   const totalInventoryValue = mockIngredients.reduce((sum, item) => sum + (item.quantity * item.price), 0);
+
+  const handleSaveTtk = () => {
+    if (!newTtk.name || !newTtk.category || !newTtk.ingredients) return;
+    const ttk = { ...newTtk, id: Date.now(), output: Number(newTtk.output) || 0 };
+    const updated = [...ttkList, ttk];
+    setTtkList(updated);
+    localStorage.setItem('kitchenCosmo_ttk', JSON.stringify(updated));
+    setNewTtk({ name: '', category: '', output: '', ingredients: '', tech: '' });
+  };
+
+  const handleDeleteTtk = (id: number) => {
+    const updated = ttkList.filter(t => t.id !== id);
+    setTtkList(updated);
+    localStorage.setItem('kitchenCosmo_ttk', JSON.stringify(updated));
+  };
+
+  const handleSaveChecklist = () => {
+    if (!newChecklist.name || !newChecklist.workshop || !newChecklist.items) return;
+    const items = newChecklist.items.split('\n').filter(i => i.trim()).map(text => ({ text: text.trim(), status: 'pending' }));
+    const checklist = { id: Date.now(), name: newChecklist.name, workshop: newChecklist.workshop, items };
+    const updated = [...checklistList, checklist];
+    setChecklistList(updated);
+    localStorage.setItem('kitchenCosmo_checklists', JSON.stringify(updated));
+    setNewChecklist({ name: '', workshop: '', items: '' });
+  };
+
+  const handleToggleChecklistItem = (checklistId: number, itemIndex: number, newStatus: string) => {
+    const updated = checklistList.map(cl => {
+      if (cl.id === checklistId) {
+        const items = [...cl.items];
+        items[itemIndex] = { ...items[itemIndex], status: newStatus };
+        return { ...cl, items };
+      }
+      return cl;
+    });
+    setChecklistList(updated);
+    localStorage.setItem('kitchenCosmo_checklists', JSON.stringify(updated));
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
@@ -169,27 +226,55 @@ const Index = () => {
                       <div className="space-y-4 pt-4">
                         <div className="space-y-2">
                           <Label htmlFor="ttk-name">Название блюда</Label>
-                          <Input id="ttk-name" placeholder="Стейк Рибай с трюфельным маслом" />
+                          <Input 
+                            id="ttk-name" 
+                            placeholder="Стейк Рибай с трюфельным маслом"
+                            value={newTtk.name}
+                            onChange={(e) => setNewTtk({...newTtk, name: e.target.value})}
+                          />
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                           <div className="space-y-2">
                             <Label htmlFor="ttk-category">Категория</Label>
-                            <Input id="ttk-category" placeholder="Основные блюда" />
+                            <Input 
+                              id="ttk-category" 
+                              placeholder="Основные блюда"
+                              value={newTtk.category}
+                              onChange={(e) => setNewTtk({...newTtk, category: e.target.value})}
+                            />
                           </div>
                           <div className="space-y-2">
                             <Label htmlFor="ttk-output">Выход (г)</Label>
-                            <Input id="ttk-output" type="number" placeholder="300" />
+                            <Input 
+                              id="ttk-output" 
+                              type="number" 
+                              placeholder="300"
+                              value={newTtk.output}
+                              onChange={(e) => setNewTtk({...newTtk, output: e.target.value})}
+                            />
                           </div>
                         </div>
                         <div className="space-y-2">
                           <Label htmlFor="ttk-ingredients">Состав</Label>
-                          <Textarea id="ttk-ingredients" placeholder="Говядина (Рибай) - 300г&#10;Трюфельное масло - 10мл&#10;Соль морская - 5г" rows={5} />
+                          <Textarea 
+                            id="ttk-ingredients" 
+                            placeholder="Говядина (Рибай) - 300г&#10;Трюфельное масло - 10мл&#10;Соль морская - 5г" 
+                            rows={5}
+                            value={newTtk.ingredients}
+                            onChange={(e) => setNewTtk({...newTtk, ingredients: e.target.value})}
+                          />
                         </div>
                         <div className="space-y-2">
                           <Label htmlFor="ttk-tech">Технология приготовления</Label>
-                          <Textarea id="ttk-tech" placeholder="1. Довести мясо до комнатной температуры&#10;2. Разогреть сковороду до 180°C..." rows={5} />
+                          <Textarea 
+                            id="ttk-tech" 
+                            placeholder="1. Довести мясо до комнатной температуры&#10;2. Разогреть сковороду до 180°C..." 
+                            rows={5}
+                            value={newTtk.tech}
+                            onChange={(e) => setNewTtk({...newTtk, tech: e.target.value})}
+                          />
                         </div>
-                        <Button className="w-full">Сохранить ТТК</Button>
+                        <Button className="w-full" onClick={handleSaveTtk}>Сохранить ТТК</Button>
                       </div>
                     </DialogContent>
                     </Dialog>
@@ -206,24 +291,29 @@ const Index = () => {
                             <CardTitle className="text-lg mb-1">{recipe.name}</CardTitle>
                             <Badge variant="outline" className="text-xs">{recipe.category}</Badge>
                           </div>
-                          <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100 transition-opacity">
-                            <Icon name="MoreVertical" size={18} />
-                          </Button>
+                          {isChefOrSousChef() && (
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive"
+                              onClick={() => handleDeleteTtk(recipe.id)}
+                            >
+                              <Icon name="Trash2" size={18} />
+                            </Button>
+                          )}
                         </div>
                       </CardHeader>
                       <CardContent>
                         <div className="space-y-3">
+                          <div className="text-sm text-muted-foreground">
+                            <p className="font-medium mb-1">Выход: {recipe.output}г</p>
+                            <p className="whitespace-pre-wrap">{recipe.ingredients}</p>
+                          </div>
                           <div className="flex gap-2 pt-2">
                             <Button size="sm" variant="outline" className="flex-1 gap-2">
                               <Icon name="Eye" size={16} />
                               Просмотр
                             </Button>
-                            {isChefOrSousChef() && (
-                              <Button size="sm" className="flex-1 gap-2">
-                                <Icon name="Pencil" size={16} />
-                                Редактировать
-                              </Button>
-                            )}
                           </div>
                         </div>
                       </CardContent>
@@ -257,17 +347,33 @@ const Index = () => {
                         <div className="space-y-4 pt-4">
                           <div className="space-y-2">
                             <Label htmlFor="checklist-name">Название чек-листа</Label>
-                            <Input id="checklist-name" placeholder="Открытие кухни" />
+                            <Input 
+                              id="checklist-name" 
+                              placeholder="Открытие кухни"
+                              value={newChecklist.name}
+                              onChange={(e) => setNewChecklist({...newChecklist, name: e.target.value})}
+                            />
                           </div>
                           <div className="space-y-2">
                             <Label htmlFor="checklist-workshop">Цех</Label>
-                            <Input id="checklist-workshop" placeholder="Горячий / Холодный / Кондитерский" />
+                            <Input 
+                              id="checklist-workshop" 
+                              placeholder="Горячий / Холодный / Кондитерский"
+                              value={newChecklist.workshop}
+                              onChange={(e) => setNewChecklist({...newChecklist, workshop: e.target.value})}
+                            />
                           </div>
                           <div className="space-y-2">
-                            <Label htmlFor="checklist-items">Пункты проверки</Label>
-                            <Textarea id="checklist-items" placeholder="Проверить температуру холодильников&#10;Осмотреть срок годности продуктов&#10;Проверить чистоту рабочих поверхностей" rows={8} />
+                            <Label htmlFor="checklist-items">Пункты проверки (каждый с новой строки)</Label>
+                            <Textarea 
+                              id="checklist-items" 
+                              placeholder="Проверить температуру холодильников&#10;Осмотреть срок годности продуктов&#10;Проверить чистоту рабочих поверхностей" 
+                              rows={8}
+                              value={newChecklist.items}
+                              onChange={(e) => setNewChecklist({...newChecklist, items: e.target.value})}
+                            />
                           </div>
-                          <Button className="w-full">Создать чек-лист</Button>
+                          <Button className="w-full" onClick={handleSaveChecklist}>Создать чек-лист</Button>
                         </div>
                       </DialogContent>
                     </Dialog>
@@ -276,29 +382,7 @@ const Index = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {[
-                    { 
-                      id: 1, 
-                      name: 'Открытие горячего цеха', 
-                      workshop: 'Горячий цех',
-                      items: [
-                        { text: 'Проверить температуру плит', status: 'done' },
-                        { text: 'Проверить чистоту рабочих поверхностей', status: 'done' },
-                        { text: 'Проверить наличие инвентаря', status: 'in_stop' },
-                        { text: 'Проверить срок годности заготовок', status: 'pending' },
-                      ]
-                    },
-                    { 
-                      id: 2, 
-                      name: 'Закрытие холодного цеха', 
-                      workshop: 'Холодный цех',
-                      items: [
-                        { text: 'Убрать все продукты в холодильники', status: 'done' },
-                        { text: 'Протереть рабочие поверхности', status: 'done' },
-                        { text: 'Проверить температуру холодильников', status: 'pending' },
-                      ]
-                    },
-                  ].map((checklist) => (
+                  {checklistList.map((checklist) => (
                     <Card key={checklist.id} className="border-border/50 hover:border-primary/50 transition-all">
                       <CardContent className="pt-6">
                         <div className="flex items-center justify-between mb-4">
@@ -321,6 +405,7 @@ const Index = () => {
                                   size="sm" 
                                   variant={item.status === 'done' ? 'default' : 'outline'}
                                   className="h-8 px-3"
+                                  onClick={() => handleToggleChecklistItem(checklist.id, idx, 'done')}
                                 >
                                   <Icon name="Check" size={14} className="mr-1" />
                                   Выполнено
@@ -329,6 +414,7 @@ const Index = () => {
                                   size="sm" 
                                   variant={item.status === 'in_stop' ? 'destructive' : 'outline'}
                                   className="h-8 px-3"
+                                  onClick={() => handleToggleChecklistItem(checklist.id, idx, 'in_stop')}
                                 >
                                   <Icon name="Ban" size={14} className="mr-1" />
                                   В стопе
@@ -467,10 +553,18 @@ const Index = () => {
                         />
                       </div>
                     )}
-                    <Button variant="outline" size="sm" className="gap-2">
-                      <Icon name="History" size={18} />
-                      История
-                    </Button>
+                    {isChefOrSousChef() && (
+                      <>
+                        <Button variant="outline" size="sm" className="gap-2">
+                          <Icon name="Download" size={18} />
+                          Экспорт
+                        </Button>
+                        <Button variant="outline" size="sm" className="gap-2">
+                          <Icon name="History" size={18} />
+                          История
+                        </Button>
+                      </>
+                    )}
                   </div>
                 </div>
               </CardHeader>
