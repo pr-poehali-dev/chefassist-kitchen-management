@@ -361,55 +361,12 @@ export default function InventoryTab({
                       </CardContent>
                     </Card>
                   ))
-                ) : null}
-                {[
-                  { id: 1, name: 'Плановая январь 2026', date: '2026-01-15', status: 'in_progress', items: 45, checked: 28, responsible: 'Иванов П.' },
-                  { id: 2, name: 'Внеплановая проверка', date: '2026-01-08', status: 'completed', items: 32, checked: 32, responsible: 'Петров С.' },
-                  { id: 3, name: 'Квартальная декабрь', date: '2025-12-30', status: 'completed', items: 50, checked: 50, responsible: 'Сидоров А.' },
-                ].map((inventory) => (
-                  <Card key={inventory.id} className="border-border/50 hover:border-primary/50 transition-all">
-                    <CardContent className="pt-6">
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center gap-4">
-                          <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-primary/10 to-secondary/10 flex items-center justify-center">
-                            <Icon name="Package" size={28} className="text-primary" />
-                          </div>
-                          <div>
-                            <p className="font-semibold text-lg">{inventory.name}</p>
-                            <p className="text-sm text-muted-foreground">Ответственный: {inventory.responsible}</p>
-                          </div>
-                        </div>
-                        <Badge variant={inventory.status === 'completed' ? 'default' : 'secondary'}>
-                          {inventory.status === 'completed' ? 'Завершена' : 'В процессе'}
-                        </Badge>
-                      </div>
-                      <div className="grid grid-cols-3 gap-4 p-4 rounded-lg bg-muted/30 mb-4">
-                        <div>
-                          <p className="text-xs text-muted-foreground mb-1">Позиций</p>
-                          <p className="text-lg font-semibold">{inventory.items}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-muted-foreground mb-1">Проверено</p>
-                          <p className="text-lg font-semibold text-primary">{inventory.checked}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-muted-foreground mb-1">Дата</p>
-                          <p className="text-lg font-semibold">{inventory.date}</p>
-                        </div>
-                      </div>
-                      <Progress value={(inventory.checked / inventory.items) * 100} className="h-2 mb-4" />
-                      <div className="flex gap-2">
-                        <Button size="sm" variant="outline" className="flex-1">
-                          <Icon name="Eye" size={16} className="mr-2" />
-                          Просмотр отчёта
-                        </Button>
-                        <Button size="sm" variant="outline">
-                          <Icon name="MoreVertical" size={16} />
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                ) : (
+                  <div className="text-center py-12">
+                    <Icon name="Package" size={48} className="mx-auto text-muted-foreground mb-4" />
+                    <p className="text-muted-foreground">История инвентаризаций пуста</p>
+                  </div>
+                )}
               </div>
             )}
           </CardContent>
