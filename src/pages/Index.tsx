@@ -70,6 +70,9 @@ const Index = () => {
   });
 
   const [orderStats, setOrderStats] = useState({ pending: 0, ordered: 0, completed: 0, total: 0 });
+  const [ordersData, setOrdersData] = useState<any[]>([]);
+  const [showOrdersDialog, setShowOrdersDialog] = useState(false);
+  const [selectedOrderStatus, setSelectedOrderStatus] = useState<string | null>(null);
 
   useEffect(() => {
     const loadOrderStats = async () => {
@@ -79,6 +82,7 @@ const Index = () => {
         if (response.ok) {
           const data = await response.json();
           const orders = data.orders || [];
+          setOrdersData(orders);
           setOrderStats({
             pending: orders.filter((o: any) => o.status === 'pending').length,
             ordered: orders.filter((o: any) => o.status === 'ordered').length,
@@ -236,15 +240,33 @@ const Index = () => {
                   </div>
                   {orderStats.total > 0 && (
                     <div className="grid grid-cols-3 gap-2 pt-2 border-t">
-                      <div className="text-center">
+                      <div 
+                        className="text-center cursor-pointer hover:bg-yellow-500/10 rounded-lg p-2 transition-colors"
+                        onClick={() => {
+                          setSelectedOrderStatus('pending');
+                          setShowOrdersDialog(true);
+                        }}
+                      >
                         <p className="text-xs text-muted-foreground mb-1">Ожидают</p>
                         <p className="text-lg font-bold text-yellow-600">{orderStats.pending}</p>
                       </div>
-                      <div className="text-center">
+                      <div 
+                        className="text-center cursor-pointer hover:bg-blue-500/10 rounded-lg p-2 transition-colors"
+                        onClick={() => {
+                          setSelectedOrderStatus('ordered');
+                          setShowOrdersDialog(true);
+                        }}
+                      >
                         <p className="text-xs text-muted-foreground mb-1">Заказано</p>
                         <p className="text-lg font-bold text-blue-600">{orderStats.ordered}</p>
                       </div>
-                      <div className="text-center">
+                      <div 
+                        className="text-center cursor-pointer hover:bg-green-500/10 rounded-lg p-2 transition-colors"
+                        onClick={() => {
+                          setSelectedOrderStatus('completed');
+                          setShowOrdersDialog(true);
+                        }}
+                      >
                         <p className="text-xs text-muted-foreground mb-1">Выполнено</p>
                         <p className="text-lg font-bold text-green-600">{orderStats.completed}</p>
                       </div>
@@ -442,6 +464,106 @@ const Index = () => {
                 <div className="text-center py-12">
                   <Icon name="FileText" size={48} className="mx-auto text-muted-foreground mb-4" />
                   <p className="text-muted-foreground">Нет данных по чек-листам</p>
+                </div>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog 
+          open={showOrdersDialog} 
+          onOpenChange={setShowOrdersDialog}
+        >
+          <DialogContent className="max-w-[95vw] sm:max-w-3xl max-h-[85vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="text-lg sm:text-xl flex items-center gap-2">
+                {selectedOrderStatus === 'pending' && (
+                  <>
+                    <Icon name="Clock" size={20} className="text-yellow-600" />
+                    Заявки в ожидании
+                  </>
+                )}
+                {selectedOrderStatus === 'ordered' && (
+                  <>
+                    <Icon name="ShoppingCart" size={20} className="text-blue-600" />
+                    Заказанные заявки
+                  </>
+                )}
+                {selectedOrderStatus === 'completed' && (
+                  <>
+                    <Icon name="CheckCircle2" size={20} className="text-green-600" />
+                    Выполненные заявки
+                  </>
+                )}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3 pt-4">
+              {ordersData
+                .filter(order => order.status === selectedOrderStatus)
+                .map(order => (
+                  <Card key={order.id} className="border">
+                    <CardContent className="pt-4">
+                      <div className="flex items-start justify-between mb-3">
+                        <div>
+                          <h3 className="font-semibold text-base">Заявка #{order.id}</h3>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            От {order.creator_name} • {new Date(order.created_at).toLocaleDateString('ru-RU')}
+                          </p>
+                        </div>
+                        <Badge 
+                          variant={selectedOrderStatus === 'completed' ? 'default' : 'outline'}
+                          className={
+                            selectedOrderStatus === 'pending' 
+                              ? 'bg-yellow-500/10 text-yellow-700 border-yellow-500/20' 
+                              : selectedOrderStatus === 'ordered'
+                              ? 'bg-blue-500/10 text-blue-700 border-blue-500/20'
+                              : ''
+                          }
+                        >
+                          {selectedOrderStatus === 'pending' && 'Ожидает'}
+                          {selectedOrderStatus === 'ordered' && 'Заказано'}
+                          {selectedOrderStatus === 'completed' && 'Выполнено'}
+                        </Badge>
+                      </div>
+                      <div className="space-y-2">
+                        {Object.entries(
+                          order.items.reduce((acc: any, item: any) => {
+                            if (!acc[item.category_name]) acc[item.category_name] = [];
+                            acc[item.category_name].push(item);
+                            return acc;
+                          }, {})
+                        ).map(([categoryName, items]: [string, any]) => (
+                          <div key={categoryName}>
+                            <h4 className="text-xs font-semibold text-muted-foreground mb-1 flex items-center gap-1">
+                              <Icon name="FolderOpen" size={12} />
+                              {categoryName}
+                            </h4>
+                            <div className="space-y-1">
+                              {items.map((item: any) => (
+                                <div key={item.id} className="flex items-center justify-between p-2 rounded-lg bg-muted/30 text-sm">
+                                  <span>{item.product_name}</span>
+                                  <div className="flex items-center gap-2">
+                                    <Badge variant="outline" className="text-xs">{item.unit}</Badge>
+                                    <Badge 
+                                      variant={item.status === 'to_order' ? 'destructive' : 'default'}
+                                      className="text-xs"
+                                    >
+                                      {item.status === 'to_order' ? 'Заказать' : 'В достатке'}
+                                    </Badge>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              {ordersData.filter(order => order.status === selectedOrderStatus).length === 0 && (
+                <div className="text-center py-8">
+                  <Icon name="FileText" size={48} className="mx-auto text-muted-foreground mb-3" />
+                  <p className="text-muted-foreground">Нет заявок с этим статусом</p>
                 </div>
               )}
             </div>
