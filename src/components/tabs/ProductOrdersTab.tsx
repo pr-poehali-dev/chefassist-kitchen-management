@@ -64,7 +64,7 @@ const ProductOrdersTab = ({ restaurantId, userId, isChefOrSousChef }: ProductOrd
   const [showCreateOrderDialog, setShowCreateOrderDialog] = useState(false);
   
   const [newCategoryName, setNewCategoryName] = useState('');
-  const [newProduct, setNewProduct] = useState({ name: '', unit: '', categoryId: '', newCategoryName: '', initialStatus: 'to_order' });
+  const [newProduct, setNewProduct] = useState({ name: '', unit: '', categoryId: '', newCategoryName: '' });
   const [selectedProducts, setSelectedProducts] = useState<{[key: number]: string}>({});
 
   useEffect(() => {
@@ -190,27 +190,18 @@ const ProductOrdersTab = ({ restaurantId, userId, isChefOrSousChef }: ProductOrd
       });
       
       if (response.ok) {
-        const data = await response.json();
-        const newProductId = data.product.id;
-        
-        // Создаём автоматически заявку с выбранным статусом
-        if (newProduct.initialStatus && userId) {
-          await fetch(`${PRODUCTS_API_URL}?action=create_order`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              restaurantId,
-              createdBy: userId,
-              items: [{ productId: newProductId, status: newProduct.initialStatus, notes: '' }]
-            })
-          });
-        }
-        
         toast.success('Продукт добавлен');
         await loadProducts();
-        await loadOrders();
-        setNewProduct({ name: '', unit: '', categoryId: '', newCategoryName: '', initialStatus: 'to_order' });
+        setNewProduct({ name: '', unit: '', categoryId: '', newCategoryName: '' });
         setShowProductDialog(false);
+        
+        // Предлагаем создать заявку
+        setTimeout(() => {
+          toast.info('Теперь можно создать заявку на этот продукт', {
+            description: 'Нажмите "Создать заявку" чтобы заказать продукты',
+            duration: 5000,
+          });
+        }, 500);
       } else {
         toast.error('Ошибка при добавлении продукта');
       }
