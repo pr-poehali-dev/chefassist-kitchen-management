@@ -1,7 +1,9 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { TabsContent } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
 import Icon from '@/components/ui/icon';
+import { useState } from 'react';
 
 interface Product {
   id: number;
@@ -55,6 +57,8 @@ const CookProductsList = ({
   onToggleProduct,
   onCreateOrder,
 }: CookProductsListProps) => {
+  const [isCreatingOrder, setIsCreatingOrder] = useState(false);
+  
   const productsByCategory = categories.map(category => ({
     category,
     products: products.filter(p => p.category_id === category.id)
@@ -153,10 +157,26 @@ const CookProductsList = ({
         </Card>
       ) : (
         <>
-          <h3 className="text-lg font-semibold flex items-center gap-2 pt-4">
-            <Icon name="Package" size={20} />
-            Создать новую заявку
-          </h3>
+          <div className="flex items-center justify-between pt-4">
+            <h3 className="text-lg font-semibold flex items-center gap-2">
+              <Icon name="Package" size={20} />
+              Создать новую заявку
+            </h3>
+            {!isCreatingOrder ? (
+              <Button onClick={() => setIsCreatingOrder(true)} className="gap-2">
+                <Icon name="Plus" size={18} />
+                Создать заявку
+              </Button>
+            ) : (
+              <Button variant="outline" onClick={() => setIsCreatingOrder(false)} className="gap-2">
+                <Icon name="X" size={18} />
+                Отмена
+              </Button>
+            )}
+          </div>
+
+          {isCreatingOrder && (
+            <>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {productsByCategory.map(({ category, products: categoryProducts }) => (
               <Card key={category.id}>
@@ -207,13 +227,18 @@ const CookProductsList = ({
           {selectedCount > 0 && (
             <div className="fixed bottom-6 right-6 z-50">
               <button
-                onClick={onCreateOrder}
+                onClick={() => {
+                  onCreateOrder();
+                  setIsCreatingOrder(false);
+                }}
                 className="bg-primary text-primary-foreground hover:bg-primary/90 px-6 py-4 rounded-full shadow-2xl flex items-center gap-3 text-lg font-semibold transition-all hover:scale-105"
               >
                 <Icon name="ShoppingCart" size={24} />
-                Создать заявку ({selectedCount})
+                Заказать ({selectedCount})
               </button>
             </div>
+          )}
+            </>
           )}
         </>
       )}
