@@ -16,38 +16,35 @@ import { Textarea } from '@/components/ui/textarea';
 
 interface ChecklistsTabProps {
   checklistList: any[];
-  setChecklistList: (list: any[]) => void;
   isChefOrSousChef: () => boolean;
   userName: string;
+  onCreateChecklist: (checklist: any) => Promise<any>;
+  onUpdateChecklist: (checklist: any) => Promise<boolean>;
+  onDeleteChecklist: (id: number) => Promise<boolean>;
+  onUpdateItem: (itemId: number, status: string, timestamp?: string) => Promise<boolean>;
 }
 
-export default function ChecklistsTab({ checklistList, setChecklistList, isChefOrSousChef, userName }: ChecklistsTabProps) {
+export default function ChecklistsTab({ checklistList, isChefOrSousChef, userName, onCreateChecklist, onUpdateChecklist, onDeleteChecklist, onUpdateItem }: ChecklistsTabProps) {
   const [newChecklist, setNewChecklist] = useState({ name: '', workshop: '', items: '', responsible: '' });
   const [showChecklistStats, setShowChecklistStats] = useState(false);
   const [editingChecklist, setEditingChecklist] = useState<any>(null);
   const [assigningResponsible, setAssigningResponsible] = useState<number | null>(null);
   const [responsibleName, setResponsibleName] = useState('');
 
-  const handleSaveChecklist = () => {
+  const handleSaveChecklist = async () => {
     if (!newChecklist.name || !newChecklist.workshop || !newChecklist.items) return;
-    const items = newChecklist.items.split('\n').filter(i => i.trim()).map(text => ({ text: text.trim(), status: 'pending' }));
-    const checklist = { 
-      id: Date.now(), 
-      name: newChecklist.name, 
-      workshop: newChecklist.workshop, 
-      items,
-      responsible: newChecklist.responsible || null
-    };
-    const updated = [...checklistList, checklist];
-    setChecklistList(updated);
-    localStorage.setItem('kitchenCosmo_checklists', JSON.stringify(updated));
+    const items = newChecklist.items.split('\n').filter(i => i.trim()).map(text => ({ text: text.trim() }));
+    await onCreateChecklist({
+      name: newChecklist.name,
+      workshop: newChecklist.workshop,
+      responsible: newChecklist.responsible || undefined,
+      items
+    });
     setNewChecklist({ name: '', workshop: '', items: '', responsible: '' });
   };
 
-  const handleDeleteChecklist = (checklistId: number) => {
-    const updated = checklistList.filter(cl => cl.id !== checklistId);
-    setChecklistList(updated);
-    localStorage.setItem('kitchenCosmo_checklists', JSON.stringify(updated));
+  const handleDeleteChecklist = async (checklistId: number) => {
+    await onDeleteChecklist(checklistId);
   };
 
   const handleEditChecklist = (checklist: any) => {
@@ -60,7 +57,7 @@ export default function ChecklistsTab({ checklistList, setChecklistList, isChefO
     });
   };
 
-  const handleUpdateChecklist = () => {
+  const handleUpdateChecklist = async () => {
     if (!newChecklist.name || !newChecklist.workshop || !newChecklist.items) return;
     const items = newChecklist.items.split('\n').filter(i => i.trim()).map((text, idx) => {
       const existingItem = editingChecklist.items[idx];
@@ -70,40 +67,38 @@ export default function ChecklistsTab({ checklistList, setChecklistList, isChefO
         timestamp: existingItem?.timestamp
       };
     });
-    const updated = checklistList.map(cl => 
-      cl.id === editingChecklist.id 
-        ? { ...cl, name: newChecklist.name, workshop: newChecklist.workshop, items, responsible: newChecklist.responsible || null }
-        : cl
-    );
-    setChecklistList(updated);
-    localStorage.setItem('kitchenCosmo_checklists', JSON.stringify(updated));
+    await onUpdateChecklist({
+      id: editingChecklist.id,
+      name: newChecklist.name,
+      workshop: newChecklist.workshop,
+      responsible: newChecklist.responsible || undefined,
+      items
+    });
     setNewChecklist({ name: '', workshop: '', items: '', responsible: '' });
     setEditingChecklist(null);
   };
 
-  const handleAssignResponsible = (checklistId: number) => {
+  const handleAssignResponsible = async (checklistId: number) => {
     if (!responsibleName.trim()) return;
-    const updated = checklistList.map(cl => 
-      cl.id === checklistId ? { ...cl, responsible: responsibleName } : cl
-    );
-    setChecklistList(updated);
-    localStorage.setItem('kitchenCosmo_checklists', JSON.stringify(updated));
+    const checklist = checklistList.find(cl => cl.id === checklistId);
+    if (!checklist) return;
+    await onUpdateChecklist({
+      id: checklistId,
+      name: checklist.name,
+      workshop: checklist.workshop,
+      responsible: responsibleName,
+      items: checklist.items
+    });
     setAssigningResponsible(null);
     setResponsibleName('');
   };
 
-  const handleToggleChecklistItem = (checklistId: number, itemIndex: number, newStatus: string) => {
-    const updated = checklistList.map(cl => {
-      if (cl.id === checklistId) {
-        const items = [...cl.items];
-        items[itemIndex] = { ...items[itemIndex], status: newStatus, timestamp: new Date().toISOString() };
-        const completedDate = new Date().toISOString().split('T')[0];
-        return { ...cl, items, completedDate };
-      }
-      return cl;
-    });
-    setChecklistList(updated);
-    localStorage.setItem('kitchenCosmo_checklists', JSON.stringify(updated));
+  const handleToggleChecklistItem = async (checklistId: number, itemIndex: number, newStatus: string) => {
+    const checklist = checklistList.find(cl => cl.id === checklistId);
+    if (!checklist) return;
+    const item = checklist.items[itemIndex];
+    if (!item) return;
+    await onUpdateItem(item.id, newStatus, new Date().toISOString());
   };
 
   const getChecklistStats = () => {
@@ -320,12 +315,14 @@ export default function ChecklistsTab({ checklistList, setChecklistList, isChefO
                               <Button 
                                 variant="ghost" 
                                 size="sm"
-                                onClick={() => {
-                                  const updated = checklistList.map(cl => 
-                                    cl.id === checklist.id ? { ...cl, responsible: null } : cl
-                                  );
-                                  setChecklistList(updated);
-                                  localStorage.setItem('kitchenCosmo_checklists', JSON.stringify(updated));
+                                onClick={async () => {
+                                  await onUpdateChecklist({
+                                    id: checklist.id,
+                                    name: checklist.name,
+                                    workshop: checklist.workshop,
+                                    responsible: undefined,
+                                    items: checklist.items
+                                  });
                                 }}
                               >
                                 <Icon name="UserX" size={16} />

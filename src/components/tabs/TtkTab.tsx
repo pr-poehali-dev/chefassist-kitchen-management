@@ -17,40 +17,48 @@ import { Textarea } from '@/components/ui/textarea';
 
 interface TtkTabProps {
   ttkList: any[];
-  setTtkList: (list: any[]) => void;
   isChefOrSousChef: () => boolean;
+  onCreateTTK: (ttk: any) => Promise<any>;
+  onUpdateTTK: (ttk: any) => Promise<boolean>;
+  onDeleteTTK: (id: number) => Promise<boolean>;
 }
 
-export default function TtkTab({ ttkList, setTtkList, isChefOrSousChef }: TtkTabProps) {
+export default function TtkTab({ ttkList, isChefOrSousChef, onCreateTTK, onUpdateTTK, onDeleteTTK }: TtkTabProps) {
   const [newTtk, setNewTtk] = useState({ name: '', category: '', output: '', ingredients: '', tech: '' });
   const [viewTtk, setViewTtk] = useState<any>(null);
   const [editTtk, setEditTtk] = useState<any>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
-  const handleSaveTtk = () => {
+  const handleSaveTtk = async () => {
     if (!newTtk.name || !newTtk.category || !newTtk.ingredients) return;
-    const ttk = { ...newTtk, id: Date.now(), output: Number(newTtk.output) || 0 };
-    const updated = [...ttkList, ttk];
-    setTtkList(updated);
-    localStorage.setItem('kitchenCosmo_ttk', JSON.stringify(updated));
+    await onCreateTTK({
+      name: newTtk.name,
+      category: newTtk.category,
+      output: Number(newTtk.output) || 0,
+      ingredients: newTtk.ingredients,
+      tech: newTtk.tech
+    });
     setNewTtk({ name: '', category: '', output: '', ingredients: '', tech: '' });
     setIsCreateDialogOpen(false);
   };
 
-  const handleUpdateTtk = () => {
+  const handleUpdateTtk = async () => {
     if (!editTtk || !editTtk.name || !editTtk.category || !editTtk.ingredients) return;
-    const updated = ttkList.map(t => t.id === editTtk.id ? { ...editTtk, output: Number(editTtk.output) || 0 } : t);
-    setTtkList(updated);
-    localStorage.setItem('kitchenCosmo_ttk', JSON.stringify(updated));
+    await onUpdateTTK({
+      id: editTtk.id,
+      name: editTtk.name,
+      category: editTtk.category,
+      output: Number(editTtk.output) || 0,
+      ingredients: editTtk.ingredients,
+      tech: editTtk.tech
+    });
     setEditTtk(null);
     setIsEditDialogOpen(false);
   };
 
-  const handleDeleteTtk = (id: number) => {
-    const updated = ttkList.filter(t => t.id !== id);
-    setTtkList(updated);
-    localStorage.setItem('kitchenCosmo_ttk', JSON.stringify(updated));
+  const handleDeleteTtk = async (id: number) => {
+    await onDeleteTTK(id);
   };
 
   return (

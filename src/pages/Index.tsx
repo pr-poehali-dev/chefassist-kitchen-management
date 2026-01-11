@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Icon from '@/components/ui/icon';
 import { useAuth } from '@/components/AuthContext';
+import { useRestaurantData } from '@/hooks/useRestaurantData';
 import LoginPage from '@/components/LoginPage';
 import TtkTab from '@/components/tabs/TtkTab';
 import ChecklistsTab from '@/components/tabs/ChecklistsTab';
@@ -20,18 +21,22 @@ import {
 
 const Index = () => {
   const { user, logout, isChefOrSousChef } = useAuth();
+  const {
+    ttkList,
+    checklistList,
+    loading,
+    createTTK,
+    updateTTK,
+    deleteTTK,
+    createChecklist,
+    updateChecklist,
+    deleteChecklist,
+    updateChecklistItem
+  } = useRestaurantData(user?.restaurantId);
 
   if (!user) {
     return <LoginPage />;
   }
-
-  const [ttkList, setTtkList] = useState(() => {
-    const saved = localStorage.getItem('kitchenCosmo_ttk');
-    return saved ? JSON.parse(saved) : [
-      { id: 1, name: 'Стейк с овощами гриль', category: 'Основные блюда', output: 300, ingredients: 'Говядина - 300г\nТрюфельное масло - 10мл', tech: 'Разогреть сковороду...' },
-      { id: 2, name: 'Паста Карбонара', category: 'Паста', output: 350, ingredients: 'Паста - 250г\nСливки - 100мл', tech: 'Отварить пасту...' },
-    ];
-  });
 
   const [activeInventory, setActiveInventory] = useState<any>(() => {
     const saved = localStorage.getItem('kitchenCosmo_activeInventory');
@@ -41,31 +46,6 @@ const Index = () => {
   const [inventoryHistory, setInventoryHistory] = useState<any[]>(() => {
     const saved = localStorage.getItem('kitchenCosmo_inventoryHistory');
     return saved ? JSON.parse(saved) : [];
-  });
-
-  const [checklistList, setChecklistList] = useState(() => {
-    const saved = localStorage.getItem('kitchenCosmo_checklists');
-    const lastResetDate = localStorage.getItem('kitchenCosmo_lastChecklistReset');
-    const today = new Date().toISOString().split('T')[0];
-    
-    if (saved) {
-      const checklists = JSON.parse(saved);
-      
-      if (lastResetDate !== today) {
-        const resetChecklists = checklists.map((cl: any) => ({
-          ...cl,
-          items: cl.items.map((item: any) => ({ ...item, status: 'pending', timestamp: undefined }))
-        }));
-        localStorage.setItem('kitchenCosmo_checklists', JSON.stringify(resetChecklists));
-        localStorage.setItem('kitchenCosmo_lastChecklistReset', today);
-        return resetChecklists;
-      }
-      
-      return checklists;
-    }
-    
-    localStorage.setItem('kitchenCosmo_lastChecklistReset', today);
-    return [];
   });
 
   const mockIngredients = [
@@ -230,15 +210,20 @@ const Index = () => {
 
           <TtkTab 
             ttkList={ttkList} 
-            setTtkList={setTtkList} 
-            isChefOrSousChef={isChefOrSousChef} 
+            isChefOrSousChef={isChefOrSousChef}
+            onCreateTTK={createTTK}
+            onUpdateTTK={updateTTK}
+            onDeleteTTK={deleteTTK}
           />
 
           <ChecklistsTab 
             checklistList={checklistList} 
-            setChecklistList={setChecklistList} 
             isChefOrSousChef={isChefOrSousChef}
             userName={user.name}
+            onCreateChecklist={createChecklist}
+            onUpdateChecklist={updateChecklist}
+            onDeleteChecklist={deleteChecklist}
+            onUpdateItem={updateChecklistItem}
           />
 
           <InventoryTab 

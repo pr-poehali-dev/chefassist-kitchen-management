@@ -1,0 +1,35 @@
+{
+  "tests": [
+    {
+      "name": "Get TTK list",
+      "method": "GET",
+      "path": "/?action=get_ttk&restaurantId=1",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "ttk": "array"
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Create TTK",
+      "method": "POST",
+      "path": "/?action=create_ttk",
+      "body": {
+        "restaurantId": 1,
+        "name": "Тестовое блюдо",
+        "category": "Основные блюда",
+        "output": 300,
+        "ingredients": "Тестовые ингредиенты",
+        "tech": "Тестовая технология"
+      },
+      "expectedStatus": 200,
+      "expectedBody": {
+        "ttk": {
+          "id": "number",
+          "name": "string"
+        }
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}
