@@ -18,7 +18,13 @@ const LoginPage = () => {
   const [generatedInviteLink, setGeneratedInviteLink] = useState('');
   const [error, setError] = useState('');
   
-  const { createRestaurant, joinRestaurant } = useAuth();
+  const { createRestaurant, joinRestaurant, logout } = useAuth();
+
+  const handleClearOldData = () => {
+    logout();
+    localStorage.clear();
+    window.location.reload();
+  };
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -134,6 +140,15 @@ const LoginPage = () => {
                 <p className="font-bold">Присоединиться</p>
                 <p className="text-xs text-muted-foreground">У меня есть приглашение</p>
               </div>
+            </Button>
+            <Button 
+              onClick={handleClearOldData} 
+              variant="ghost"
+              size="sm"
+              className="w-full text-xs text-muted-foreground"
+            >
+              <Icon name="RefreshCw" size={14} className="mr-2" />
+              Очистить старые данные
             </Button>
           </CardContent>
         </Card>
