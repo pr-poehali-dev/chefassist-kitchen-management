@@ -44,8 +44,8 @@ interface ProductMatrixViewProps {
   setShowProductDialog: (show: boolean) => void;
   newCategoryName: string;
   setNewCategoryName: (name: string) => void;
-  newProduct: { name: string; unit: string; categoryId: string };
-  setNewProduct: (product: { name: string; unit: string; categoryId: string }) => void;
+  newProduct: { name: string; unit: string; categoryId: string; newCategoryName: string };
+  setNewProduct: (product: { name: string; unit: string; categoryId: string; newCategoryName: string }) => void;
   handleCreateCategory: () => void;
   handleCreateProduct: () => void;
 }
@@ -154,17 +154,29 @@ const ProductMatrixView = ({
           <div className="space-y-4 pt-4">
             <div>
               <Label htmlFor="productCategory">Категория</Label>
-              <Select value={newProduct.categoryId} onValueChange={(value) => setNewProduct({...newProduct, categoryId: value})}>
+              <Select value={newProduct.categoryId} onValueChange={(value) => setNewProduct({...newProduct, categoryId: value, newCategoryName: ''})}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Выберите категорию" />
+                  <SelectValue placeholder="Выберите или создайте новую" />
                 </SelectTrigger>
                 <SelectContent>
                   {categories.map(cat => (
                     <SelectItem key={cat.id} value={cat.id.toString()}>{cat.name}</SelectItem>
                   ))}
+                  <SelectItem value="new">+ Создать новую категорию</SelectItem>
                 </SelectContent>
               </Select>
             </div>
+            {newProduct.categoryId === 'new' && (
+              <div>
+                <Label htmlFor="newCategoryName">Название новой категории</Label>
+                <Input
+                  id="newCategoryName"
+                  placeholder="Например: Молочные продукты"
+                  value={newProduct.newCategoryName}
+                  onChange={(e) => setNewProduct({...newProduct, newCategoryName: e.target.value})}
+                />
+              </div>
+            )}
             <div>
               <Label htmlFor="productName">Название продукта</Label>
               <Input
@@ -189,7 +201,12 @@ const ProductMatrixView = ({
               </Button>
               <Button 
                 onClick={handleCreateProduct} 
-                disabled={!newProduct.name || !newProduct.unit || !newProduct.categoryId}
+                disabled={
+                  !newProduct.name || 
+                  !newProduct.unit || 
+                  !newProduct.categoryId ||
+                  (newProduct.categoryId === 'new' && !newProduct.newCategoryName.trim())
+                }
                 className="flex-1"
               >
                 Добавить

@@ -129,22 +129,7 @@ const Index = () => {
     });
   }, [checklistList]);
 
-  useEffect(() => {
-    const lowStock = mockIngredients.filter(item => item.quantity < item.minStock);
-    if (lowStock.length > 0) {
-      lowStock.forEach(item => {
-        const itemKey = `inventory-${item.id}`;
-        if (!notifiedIssues.has(itemKey)) {
-          playNotificationSound('warning');
-          toast.warning(`Низкий остаток: ${item.name}`, {
-            description: `Осталось: ${item.quantity}${item.unit}, минимум: ${item.minStock}${item.unit}`,
-            duration: 6000,
-          });
-          setNotifiedIssues(prev => new Set(prev).add(itemKey));
-        }
-      });
-    }
-  }, [activeInventory]);
+
 
   const lowStockItems = mockIngredients.filter(item => item.quantity < item.minStock);
   const totalInventoryValue = mockIngredients.reduce((sum, item) => sum + (item.quantity * item.price), 0);

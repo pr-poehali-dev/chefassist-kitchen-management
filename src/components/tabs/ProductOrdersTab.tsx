@@ -64,7 +64,7 @@ const ProductOrdersTab = ({ restaurantId, userId, isChefOrSousChef }: ProductOrd
   const [showCreateOrderDialog, setShowCreateOrderDialog] = useState(false);
   
   const [newCategoryName, setNewCategoryName] = useState('');
-  const [newProduct, setNewProduct] = useState({ name: '', unit: '', categoryId: '' });
+  const [newProduct, setNewProduct] = useState({ name: '', unit: '', categoryId: '', newCategoryName: '' });
   const [selectedProducts, setSelectedProducts] = useState<{[key: number]: string}>({});
 
   useEffect(() => {
@@ -152,14 +152,38 @@ const ProductOrdersTab = ({ restaurantId, userId, isChefOrSousChef }: ProductOrd
       toast.error('Заполните все поля');
       return;
     }
+
+    if (newProduct.categoryId === 'new' && !newProduct.newCategoryName.trim()) {
+      toast.error('Введите название новой категории');
+      return;
+    }
     
     try {
+      let categoryId = newProduct.categoryId;
+
+      if (newProduct.categoryId === 'new') {
+        const catResponse = await fetch(`${PRODUCTS_API_URL}?action=create_category`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ restaurantId, name: newProduct.newCategoryName.trim() })
+        });
+        
+        if (!catResponse.ok) {
+          toast.error('Ошибка при создании категории');
+          return;
+        }
+        
+        const catData = await catResponse.json();
+        categoryId = catData.category.id.toString();
+        await loadCategories();
+      }
+
       const response = await fetch(`${PRODUCTS_API_URL}?action=create_product`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           restaurantId,
-          categoryId: parseInt(newProduct.categoryId),
+          categoryId: parseInt(categoryId),
           name: newProduct.name,
           unit: newProduct.unit
         })
@@ -168,7 +192,7 @@ const ProductOrdersTab = ({ restaurantId, userId, isChefOrSousChef }: ProductOrd
       if (response.ok) {
         toast.success('Продукт добавлен');
         await loadProducts();
-        setNewProduct({ name: '', unit: '', categoryId: '' });
+        setNewProduct({ name: '', unit: '', categoryId: '', newCategoryName: '' });
         setShowProductDialog(false);
       } else {
         toast.error('Ошибка при добавлении продукта');
