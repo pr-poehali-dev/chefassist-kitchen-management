@@ -305,7 +305,7 @@ const Index = () => {
                           <p className="text-2xl font-bold text-muted-foreground">{stats.pending}</p>
                         </div>
                       </div>
-                      {expandedStatus?.workshop === workshop && (
+                      {expandedStatus?.workshop === workshop && stats.items && stats.items[expandedStatus.status] && (
                         <div className="mt-4 p-4 rounded-lg bg-muted/30 border border-border">
                           <h4 className="font-semibold mb-3 flex items-center gap-2">
                             <Icon name="List" size={18} />
