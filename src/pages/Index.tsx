@@ -11,8 +11,7 @@ import TtkTab from '@/components/tabs/TtkTab';
 import ChecklistsTab from '@/components/tabs/ChecklistsTab';
 import InventoryTab from '@/components/tabs/InventoryTab';
 import EmployeesTab from '@/components/tabs/EmployeesTab';
-import ProductsTab from '@/components/tabs/ProductsTab';
-import OrdersTab from '@/components/tabs/OrdersTab';
+import ProductOrdersTab from '@/components/tabs/ProductOrdersTab';
 import { WriteoffTab } from '@/components/tabs/OrdersAndWriteoffTabs';
 import { toast } from 'sonner';
 import {
@@ -258,17 +257,11 @@ const Index = () => {
               <Icon name="CheckSquare" size={16} />
               <span>Чек-листы</span>
             </TabsTrigger>
-            <TabsTrigger value="orders" className="gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-4">
+            <TabsTrigger value="products" className="gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-4">
               <Icon name="ShoppingCart" size={16} />
-              <span>Заявки</span>
+              <span className="hidden sm:inline">Продукты</span>
+              <span className="sm:hidden">Прод.</span>
             </TabsTrigger>
-            {isChefOrSousChef() && (
-              <TabsTrigger value="products" className="gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-4">
-                <Icon name="Package" size={16} />
-                <span className="hidden sm:inline">Матрица</span>
-                <span className="sm:hidden">Матр.</span>
-              </TabsTrigger>
-            )}
             {isChefOrSousChef() && (
               <TabsTrigger value="employees" className="gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-4">
                 <Icon name="Users" size={16} />
@@ -313,9 +306,7 @@ const Index = () => {
             userName={user.name} 
           />
 
-          <ProductsTab restaurantId={user?.restaurantId} isChefOrSousChef={isChefOrSousChef} />
-          
-          <OrdersTab restaurantId={user?.restaurantId} userId={user?.id} isChefOrSousChef={isChefOrSousChef} />
+          <ProductOrdersTab restaurantId={user?.restaurantId} userId={user?.id} isChefOrSousChef={isChefOrSousChef} />
           
           <WriteoffTab />
 
