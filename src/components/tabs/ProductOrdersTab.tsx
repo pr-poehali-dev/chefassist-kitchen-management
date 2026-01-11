@@ -354,6 +354,7 @@ const ProductOrdersTab = ({ restaurantId, userId, isChefOrSousChef }: ProductOrd
         <CookProductsList
           categories={categories}
           products={products}
+          activeOrders={activeOrders}
           selectedProducts={selectedProducts}
           onToggleProduct={handleToggleProduct}
           onCreateOrder={handleCreateOrder}

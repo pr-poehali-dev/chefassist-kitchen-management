@@ -18,9 +18,30 @@ interface ProductCategory {
   restaurant_id: number;
 }
 
+interface OrderItem {
+  id: number;
+  product_id: number;
+  product_name: string;
+  unit: string;
+  category_name: string;
+  status: string;
+  notes: string;
+}
+
+interface Order {
+  id: number;
+  created_by: number;
+  creator_name: string;
+  creator_role: string;
+  status: string;
+  created_at: string;
+  items: OrderItem[];
+}
+
 interface CookProductsListProps {
   categories: ProductCategory[];
   products: Product[];
+  activeOrders: Order[];
   selectedProducts: {[key: number]: string};
   onToggleProduct: (productId: number, currentStatus: string | undefined) => void;
   onCreateOrder: () => void;
@@ -29,6 +50,7 @@ interface CookProductsListProps {
 const CookProductsList = ({
   categories,
   products,
+  activeOrders,
   selectedProducts,
   onToggleProduct,
   onCreateOrder,
@@ -50,10 +72,77 @@ const CookProductsList = ({
     }
   };
 
+  const getOrderStatusBadge = (status: string) => {
+    switch (status) {
+      case 'pending': 
+        return <Badge variant="outline" className="bg-yellow-500/10 text-yellow-700 border-yellow-500/20">Ожидает</Badge>;
+      case 'ordered': 
+        return <Badge variant="outline" className="bg-blue-500/10 text-blue-700 border-blue-500/20">Заказано</Badge>;
+      case 'completed': 
+        return <Badge variant="default">Выполнено</Badge>;
+      default: 
+        return <Badge variant="outline">{status}</Badge>;
+    }
+  };
+
   const selectedCount = Object.keys(selectedProducts).length;
 
   return (
     <TabsContent value="orders" className="space-y-4 mt-0">
+      {activeOrders.length > 0 && (
+        <div className="space-y-3">
+          <h3 className="text-lg font-semibold flex items-center gap-2">
+            <Icon name="ShoppingCart" size={20} />
+            Активные заявки
+            <Badge variant="secondary">{activeOrders.length}</Badge>
+          </h3>
+          {activeOrders.map(order => (
+            <Card key={order.id} className="border-primary/20">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="text-base">Заявка #{order.id}</CardTitle>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {new Date(order.created_at).toLocaleDateString('ru-RU')} • {order.creator_name}
+                    </p>
+                  </div>
+                  {getOrderStatusBadge(order.status)}
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {Object.entries(
+                    order.items.reduce((acc, item) => {
+                      if (!acc[item.category_name]) acc[item.category_name] = [];
+                      acc[item.category_name].push(item);
+                      return acc;
+                    }, {} as {[key: string]: OrderItem[]})
+                  ).map(([categoryName, items]) => (
+                    <div key={categoryName}>
+                      <h4 className="text-xs font-semibold text-muted-foreground mb-1 flex items-center gap-1">
+                        <Icon name="FolderOpen" size={12} />
+                        {categoryName}
+                      </h4>
+                      <div className="space-y-1">
+                        {items.map(item => (
+                          <div key={item.id} className="flex items-center justify-between p-2 rounded-lg bg-muted/30 text-xs">
+                            <span>{item.product_name}</span>
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline" className="text-[10px]">{item.unit}</Badge>
+                              {getStatusBadge(item.status)}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+
       {productsByCategory.length === 0 ? (
         <Card>
           <CardContent className="pt-6 text-center">
@@ -64,6 +153,10 @@ const CookProductsList = ({
         </Card>
       ) : (
         <>
+          <h3 className="text-lg font-semibold flex items-center gap-2 pt-4">
+            <Icon name="Package" size={20} />
+            Создать новую заявку
+          </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {productsByCategory.map(({ category, products: categoryProducts }) => (
               <Card key={category.id}>
