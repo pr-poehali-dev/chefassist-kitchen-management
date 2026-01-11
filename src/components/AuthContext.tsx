@@ -105,9 +105,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const joinRestaurant = (name: string, role: UserRole, inviteCode: string): boolean => {
     const allRestaurants = JSON.parse(localStorage.getItem('kitchenCosmo_allRestaurants') || '[]');
+    console.log('🔍 Поиск ресторана по коду:', inviteCode);
+    console.log('📋 Все рестораны в localStorage:', allRestaurants);
     const rest = allRestaurants.find((r: Restaurant) => r.inviteCode === inviteCode);
+    console.log('✅ Найденный ресторан:', rest);
     
-    if (!rest) return false;
+    if (!rest) {
+      console.error('❌ Ресторан с кодом', inviteCode, 'не найден');
+      return false;
+    }
 
     const newUser: User = {
       id: Date.now().toString(),
