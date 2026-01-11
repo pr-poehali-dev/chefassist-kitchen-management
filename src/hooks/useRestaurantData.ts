@@ -46,9 +46,13 @@ export const useRestaurantData = (restaurantId: number | undefined) => {
       if (response.ok) {
         const data = await response.json();
         setTtkList(data.ttk || []);
+      } else {
+        console.error('Failed to load TTK:', response.status);
+        setTtkList([]);
       }
     } catch (error) {
       console.error('Error loading TTK:', error);
+      setTtkList([]);
     }
   };
 
@@ -60,9 +64,13 @@ export const useRestaurantData = (restaurantId: number | undefined) => {
       if (response.ok) {
         const data = await response.json();
         setChecklistList(data.checklists || []);
+      } else {
+        console.error('Failed to load checklists:', response.status);
+        setChecklistList([]);
       }
     } catch (error) {
       console.error('Error loading checklists:', error);
+      setChecklistList([]);
     }
   };
 

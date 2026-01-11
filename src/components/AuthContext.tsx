@@ -47,7 +47,18 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(() => {
     const savedUser = localStorage.getItem('kitchenCosmoUser');
-    return savedUser ? JSON.parse(savedUser) : null;
+    if (savedUser) {
+      const parsed = JSON.parse(savedUser);
+      if (parsed.restaurantId && parsed.restaurantId > 1000000000000) {
+        console.warn('⚠️ Detected old localStorage data, clearing...');
+        localStorage.removeItem('kitchenCosmoUser');
+        localStorage.removeItem('kitchenCosmo_allRestaurants');
+        localStorage.removeItem('kitchenCosmo_allEmployees');
+        return null;
+      }
+      return parsed;
+    }
+    return null;
   });
 
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
