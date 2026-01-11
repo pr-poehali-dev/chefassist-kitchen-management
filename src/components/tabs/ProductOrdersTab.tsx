@@ -64,7 +64,7 @@ const ProductOrdersTab = ({ restaurantId, userId, isChefOrSousChef }: ProductOrd
   const [showCreateOrderDialog, setShowCreateOrderDialog] = useState(false);
   
   const [newCategoryName, setNewCategoryName] = useState('');
-  const [newProduct, setNewProduct] = useState({ name: '', unit: '', categoryId: '', newCategoryName: '' });
+  const [newProduct, setNewProduct] = useState({ name: '', unit: '', categoryId: '', newCategoryName: '', initialStatus: 'to_order' });
   const [selectedProducts, setSelectedProducts] = useState<{[key: number]: string}>({});
 
   useEffect(() => {
@@ -190,9 +190,26 @@ const ProductOrdersTab = ({ restaurantId, userId, isChefOrSousChef }: ProductOrd
       });
       
       if (response.ok) {
+        const data = await response.json();
+        const newProductId = data.product.id;
+        
+        // Создаём автоматически заявку с выбранным статусом
+        if (newProduct.initialStatus && userId) {
+          await fetch(`${PRODUCTS_API_URL}?action=create_order`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              restaurantId,
+              createdBy: userId,
+              items: [{ productId: newProductId, status: newProduct.initialStatus, notes: '' }]
+            })
+          });
+        }
+        
         toast.success('Продукт добавлен');
         await loadProducts();
-        setNewProduct({ name: '', unit: '', categoryId: '', newCategoryName: '' });
+        await loadOrders();
+        setNewProduct({ name: '', unit: '', categoryId: '', newCategoryName: '', initialStatus: 'to_order' });
         setShowProductDialog(false);
       } else {
         toast.error('Ошибка при добавлении продукта');

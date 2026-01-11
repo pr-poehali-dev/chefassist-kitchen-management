@@ -44,8 +44,8 @@ interface ProductMatrixViewProps {
   setShowProductDialog: (show: boolean) => void;
   newCategoryName: string;
   setNewCategoryName: (name: string) => void;
-  newProduct: { name: string; unit: string; categoryId: string; newCategoryName: string };
-  setNewProduct: (product: { name: string; unit: string; categoryId: string; newCategoryName: string }) => void;
+  newProduct: { name: string; unit: string; categoryId: string; newCategoryName: string; initialStatus: string };
+  setNewProduct: (product: { name: string; unit: string; categoryId: string; newCategoryName: string; initialStatus: string }) => void;
   handleCreateCategory: () => void;
   handleCreateProduct: () => void;
 }
@@ -194,6 +194,18 @@ const ProductMatrixView = ({
                 value={newProduct.unit}
                 onChange={(e) => setNewProduct({...newProduct, unit: e.target.value})}
               />
+            </div>
+            <div>
+              <Label htmlFor="productStatus">Начальный статус</Label>
+              <Select value={newProduct.initialStatus} onValueChange={(value) => setNewProduct({...newProduct, initialStatus: value})}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Выберите статус" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="to_order">Заказать</SelectItem>
+                  <SelectItem value="in_stock">В достатке</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="flex gap-2">
               <Button variant="outline" onClick={() => setShowProductDialog(false)} className="flex-1">
