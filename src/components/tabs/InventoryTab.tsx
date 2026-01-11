@@ -80,7 +80,7 @@ export default function InventoryTab({
   };
 
   const handleSubmitEntry = (productIndex: number, quantity: number) => {
-    if (!activeInventory || quantity <= 0) return;
+    if (!activeInventory || quantity < 0) return;
     const updated = {...activeInventory};
     const product = updated.products[productIndex];
     
