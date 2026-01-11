@@ -69,6 +69,32 @@ const Index = () => {
     return saved ? JSON.parse(saved) : [];
   });
 
+  const [orderStats, setOrderStats] = useState({ pending: 0, ordered: 0, completed: 0, total: 0 });
+
+  useEffect(() => {
+    const loadOrderStats = async () => {
+      if (!user?.restaurantId) return;
+      try {
+        const response = await fetch(`https://functions.poehali.dev/2ff9cc4a-f745-42e6-bca2-f02bd90f39fd?action=get_orders&restaurantId=${user.restaurantId}`);
+        if (response.ok) {
+          const data = await response.json();
+          const orders = data.orders || [];
+          setOrderStats({
+            pending: orders.filter((o: any) => o.status === 'pending').length,
+            ordered: orders.filter((o: any) => o.status === 'ordered').length,
+            completed: orders.filter((o: any) => o.status === 'completed').length,
+            total: orders.length
+          });
+        }
+      } catch (error) {
+        console.error('Error loading order stats:', error);
+      }
+    };
+    loadOrderStats();
+    const interval = setInterval(loadOrderStats, 30000);
+    return () => clearInterval(interval);
+  }, [user?.restaurantId]);
+
   const mockIngredients = [
     { id: 1, name: 'Томаты', category: 'Овощи', quantity: 15, unit: 'кг', minStock: 10, price: 120 },
     { id: 2, name: 'Говядина', category: 'Мясо', quantity: 8, unit: 'кг', minStock: 12, price: 650 },
@@ -198,14 +224,32 @@ const Index = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <Card className="border-primary/20 hover:border-primary/40 transition-all hover:shadow-lg hover:shadow-primary/10">
               <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">Активные заявки</p>
-                    <p className="text-3xl font-bold text-primary">{mockOrders.filter(o => o.status !== 'delivered').length}</p>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-1">Активные заявки</p>
+                      <p className="text-3xl font-bold text-primary">{orderStats.total}</p>
+                    </div>
+                    <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                      <Icon name="ShoppingCart" size={24} className="text-primary" />
+                    </div>
                   </div>
-                  <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Icon name="ShoppingCart" size={24} className="text-primary" />
-                  </div>
+                  {orderStats.total > 0 && (
+                    <div className="grid grid-cols-3 gap-2 pt-2 border-t">
+                      <div className="text-center">
+                        <p className="text-xs text-muted-foreground mb-1">Ожидают</p>
+                        <p className="text-lg font-bold text-yellow-600">{orderStats.pending}</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-xs text-muted-foreground mb-1">Заказано</p>
+                        <p className="text-lg font-bold text-blue-600">{orderStats.ordered}</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-xs text-muted-foreground mb-1">Выполнено</p>
+                        <p className="text-lg font-bold text-green-600">{orderStats.completed}</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
