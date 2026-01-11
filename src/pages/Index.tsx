@@ -65,7 +65,7 @@ const Index = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Card className="border-primary/20 hover:border-primary/40 transition-all hover:shadow-lg hover:shadow-primary/10">
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between">
@@ -108,19 +108,7 @@ const Index = () => {
               </CardContent>
             </Card>
 
-            <Card className="border-primary/20 hover:border-primary/40 transition-all hover:shadow-lg hover:shadow-primary/10">
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Стоимость склада</p>
-                    <p className="text-3xl font-bold mt-1">{(totalInventoryValue / 1000).toFixed(1)}K₽</p>
-                  </div>
-                  <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <Icon name="TrendingUp" size={24} className="text-primary" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+
           </div>
         </header>
 
@@ -298,15 +286,7 @@ const Index = () => {
                           <p className="text-sm text-muted-foreground">{item.category}</p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-6">
-                        <div className="text-right">
-                          <p className="font-semibold">{item.quantity} {item.unit}</p>
-                          <p className="text-xs text-muted-foreground">Мин: {item.minStock} {item.unit}</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="font-semibold">{item.price}₽</p>
-                          <p className="text-xs text-muted-foreground">за {item.unit}</p>
-                        </div>
+                      <div className="flex items-center gap-4">
                         {item.quantity < item.minStock && (
                           <Badge variant="destructive">Заказать</Badge>
                         )}
