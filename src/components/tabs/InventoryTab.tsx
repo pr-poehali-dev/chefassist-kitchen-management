@@ -73,6 +73,12 @@ export default function InventoryTab({
     setInventoryProducts(productNames);
   };
 
+  const handleDeleteFromHistory = (invId: number) => {
+    const updated = inventoryHistory.filter((inv: any) => inv.id !== invId);
+    setInventoryHistory(updated);
+    localStorage.setItem('kitchenCosmo_inventoryHistory', JSON.stringify(updated));
+  };
+
   const handleSubmitEntry = (productIndex: number, quantity: number) => {
     if (!activeInventory || quantity <= 0) return;
     const updated = {...activeInventory};
@@ -341,6 +347,15 @@ export default function InventoryTab({
                               <Icon name="FileText" size={16} className="mr-2" />
                               Отчёт
                             </Button>
+                            {isChefOrSousChef() && (
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={() => handleDeleteFromHistory(inv.id)}
+                              >
+                                <Icon name="Trash2" size={16} className="text-destructive" />
+                              </Button>
+                            )}
                           </div>
                         </div>
                       </CardContent>
