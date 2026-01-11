@@ -24,6 +24,9 @@ interface TtkTabProps {
 export default function TtkTab({ ttkList, setTtkList, isChefOrSousChef }: TtkTabProps) {
   const [newTtk, setNewTtk] = useState({ name: '', category: '', output: '', ingredients: '', tech: '' });
   const [viewTtk, setViewTtk] = useState<any>(null);
+  const [editTtk, setEditTtk] = useState<any>(null);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   const handleSaveTtk = () => {
     if (!newTtk.name || !newTtk.category || !newTtk.ingredients) return;
@@ -32,6 +35,16 @@ export default function TtkTab({ ttkList, setTtkList, isChefOrSousChef }: TtkTab
     setTtkList(updated);
     localStorage.setItem('kitchenCosmo_ttk', JSON.stringify(updated));
     setNewTtk({ name: '', category: '', output: '', ingredients: '', tech: '' });
+    setIsCreateDialogOpen(false);
+  };
+
+  const handleUpdateTtk = () => {
+    if (!editTtk || !editTtk.name || !editTtk.category || !editTtk.ingredients) return;
+    const updated = ttkList.map(t => t.id === editTtk.id ? { ...editTtk, output: Number(editTtk.output) || 0 } : t);
+    setTtkList(updated);
+    localStorage.setItem('kitchenCosmo_ttk', JSON.stringify(updated));
+    setEditTtk(null);
+    setIsEditDialogOpen(false);
   };
 
   const handleDeleteTtk = (id: number) => {
@@ -50,7 +63,7 @@ export default function TtkTab({ ttkList, setTtkList, isChefOrSousChef }: TtkTab
               Технико-технологические карты
             </CardTitle>
             {isChefOrSousChef() && (
-              <Dialog>
+              <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
                 <DialogTrigger asChild>
                   <Button className="gap-2">
                     <Icon name="Plus" size={18} />
@@ -131,14 +144,25 @@ export default function TtkTab({ ttkList, setTtkList, isChefOrSousChef }: TtkTab
                       <Badge variant="outline" className="text-xs">{recipe.category}</Badge>
                     </div>
                     {isChefOrSousChef() && (
-                      <Button 
-                        size="icon" 
-                        variant="ghost"
-                        className="opacity-0 group-hover:opacity-100 transition-opacity"
-                        onClick={() => handleDeleteTtk(recipe.id)}
-                      >
-                        <Icon name="Trash2" size={16} className="text-destructive" />
-                      </Button>
+                      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button 
+                          size="icon" 
+                          variant="ghost"
+                          onClick={() => {
+                            setEditTtk(recipe);
+                            setIsEditDialogOpen(true);
+                          }}
+                        >
+                          <Icon name="Edit" size={16} className="text-primary" />
+                        </Button>
+                        <Button 
+                          size="icon" 
+                          variant="ghost"
+                          onClick={() => handleDeleteTtk(recipe.id)}
+                        >
+                          <Icon name="Trash2" size={16} className="text-destructive" />
+                        </Button>
+                      </div>
                     )}
                   </div>
                 </CardHeader>
@@ -183,7 +207,6 @@ export default function TtkTab({ ttkList, setTtkList, isChefOrSousChef }: TtkTab
                                     <thead className="bg-muted">
                                       <tr>
                                         <th className="text-left p-3 border-b">Наименование</th>
-                                        <th className="text-left p-3 border-b">Брутто</th>
                                         <th className="text-left p-3 border-b">Нетто</th>
                                       </tr>
                                     </thead>
@@ -191,23 +214,19 @@ export default function TtkTab({ ttkList, setTtkList, isChefOrSousChef }: TtkTab
                                       {viewTtk.ingredients.split('\n').map((line: string, idx: number) => {
                                         const parts = line.split(' - ');
                                         let product = line;
-                                        let brutto = '—';
                                         let netto = '—';
                                         
                                         if (parts.length >= 3) {
                                           product = parts[0].trim();
-                                          brutto = parts[1].trim();
                                           netto = parts[2].trim();
                                         } else if (parts.length === 2) {
                                           product = parts[0].trim();
-                                          brutto = parts[1].trim();
                                           netto = parts[1].trim();
                                         }
                                         
                                         return (
                                           <tr key={idx} className="border-b last:border-0">
                                             <td className="p-3">{product}</td>
-                                            <td className="p-3 font-medium">{brutto}</td>
                                             <td className="p-3 font-medium">{netto}</td>
                                           </tr>
                                         );
@@ -234,6 +253,74 @@ export default function TtkTab({ ttkList, setTtkList, isChefOrSousChef }: TtkTab
           </div>
         </CardContent>
       </Card>
+
+      {/* Edit Dialog */}
+      {isChefOrSousChef() && editTtk && (
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Редактировать ТТК</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 pt-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-ttk-name">Название блюда</Label>
+                <Input 
+                  id="edit-ttk-name" 
+                  placeholder="Стейк Рибай с трюфельным маслом"
+                  value={editTtk.name}
+                  onChange={(e) => setEditTtk({...editTtk, name: e.target.value})}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-ttk-category">Категория</Label>
+                  <Input 
+                    id="edit-ttk-category" 
+                    placeholder="Основные блюда"
+                    value={editTtk.category}
+                    onChange={(e) => setEditTtk({...editTtk, category: e.target.value})}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-ttk-output">Выход (г)</Label>
+                  <Input 
+                    id="edit-ttk-output" 
+                    type="number" 
+                    placeholder="300"
+                    value={editTtk.output}
+                    onChange={(e) => setEditTtk({...editTtk, output: e.target.value})}
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-ttk-ingredients">Состав продуктов</Label>
+                <p className="text-xs text-muted-foreground mb-2">Формат: Наименование - Брутто - Нетто (каждый с новой строки)</p>
+                <Textarea 
+                  id="edit-ttk-ingredients" 
+                  placeholder="Говядина (Рибай) - 350г - 300г&#10;Трюфельное масло - 10мл - 10мл&#10;Соль морская - 5г - 5г" 
+                  rows={5}
+                  value={editTtk.ingredients}
+                  onChange={(e) => setEditTtk({...editTtk, ingredients: e.target.value})}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-ttk-tech">Технология приготовления</Label>
+                <Textarea 
+                  id="edit-ttk-tech" 
+                  placeholder="1. Довести мясо до комнатной температуры&#10;2. Разогреть сковороду до 180°C..." 
+                  rows={5}
+                  value={editTtk.tech}
+                  onChange={(e) => setEditTtk({...editTtk, tech: e.target.value})}
+                />
+              </div>
+              <div className="flex gap-2">
+                <Button className="flex-1" onClick={handleUpdateTtk}>Сохранить изменения</Button>
+                <Button variant="outline" className="flex-1" onClick={() => setIsEditDialogOpen(false)}>Отмена</Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </TabsContent>
   );
 }
