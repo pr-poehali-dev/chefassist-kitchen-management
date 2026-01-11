@@ -21,18 +21,26 @@ interface ChecklistsTabProps {
 }
 
 export default function ChecklistsTab({ checklistList, setChecklistList, isChefOrSousChef }: ChecklistsTabProps) {
-  const [newChecklist, setNewChecklist] = useState({ name: '', workshop: '', items: '' });
+  const [newChecklist, setNewChecklist] = useState({ name: '', workshop: '', items: '', responsible: '' });
   const [showChecklistStats, setShowChecklistStats] = useState(false);
   const [editingChecklist, setEditingChecklist] = useState<any>(null);
+  const [assigningResponsible, setAssigningResponsible] = useState<number | null>(null);
+  const [responsibleName, setResponsibleName] = useState('');
 
   const handleSaveChecklist = () => {
     if (!newChecklist.name || !newChecklist.workshop || !newChecklist.items) return;
     const items = newChecklist.items.split('\n').filter(i => i.trim()).map(text => ({ text: text.trim(), status: 'pending' }));
-    const checklist = { id: Date.now(), name: newChecklist.name, workshop: newChecklist.workshop, items };
+    const checklist = { 
+      id: Date.now(), 
+      name: newChecklist.name, 
+      workshop: newChecklist.workshop, 
+      items,
+      responsible: newChecklist.responsible || null
+    };
     const updated = [...checklistList, checklist];
     setChecklistList(updated);
     localStorage.setItem('kitchenCosmo_checklists', JSON.stringify(updated));
-    setNewChecklist({ name: '', workshop: '', items: '' });
+    setNewChecklist({ name: '', workshop: '', items: '', responsible: '' });
   };
 
   const handleDeleteChecklist = (checklistId: number) => {
@@ -46,7 +54,8 @@ export default function ChecklistsTab({ checklistList, setChecklistList, isChefO
     setNewChecklist({
       name: checklist.name,
       workshop: checklist.workshop,
-      items: checklist.items.map((item: any) => item.text).join('\n')
+      items: checklist.items.map((item: any) => item.text).join('\n'),
+      responsible: checklist.responsible || ''
     });
   };
 
@@ -62,13 +71,24 @@ export default function ChecklistsTab({ checklistList, setChecklistList, isChefO
     });
     const updated = checklistList.map(cl => 
       cl.id === editingChecklist.id 
-        ? { ...cl, name: newChecklist.name, workshop: newChecklist.workshop, items }
+        ? { ...cl, name: newChecklist.name, workshop: newChecklist.workshop, items, responsible: newChecklist.responsible || null }
         : cl
     );
     setChecklistList(updated);
     localStorage.setItem('kitchenCosmo_checklists', JSON.stringify(updated));
-    setNewChecklist({ name: '', workshop: '', items: '' });
+    setNewChecklist({ name: '', workshop: '', items: '', responsible: '' });
     setEditingChecklist(null);
+  };
+
+  const handleAssignResponsible = (checklistId: number) => {
+    if (!responsibleName.trim()) return;
+    const updated = checklistList.map(cl => 
+      cl.id === checklistId ? { ...cl, responsible: responsibleName } : cl
+    );
+    setChecklistList(updated);
+    localStorage.setItem('kitchenCosmo_checklists', JSON.stringify(updated));
+    setAssigningResponsible(null);
+    setResponsibleName('');
   };
 
   const handleToggleChecklistItem = (checklistId: number, itemIndex: number, newStatus: string) => {
@@ -95,6 +115,7 @@ export default function ChecklistsTab({ checklistList, setChecklistList, isChefO
       stats[cl.workshop].push({
         name: cl.name,
         date: cl.completedDate || 'Не заполнен',
+        responsible: cl.responsible,
         completed,
         inRestriction,
         inStop,
@@ -139,6 +160,12 @@ export default function ChecklistsTab({ checklistList, setChecklistList, isChefO
                                       <div>
                                         <p className="font-medium">{item.name}</p>
                                         <p className="text-sm text-muted-foreground">Дата: {item.date}</p>
+                                        {item.responsible && (
+                                          <p className="text-xs text-secondary flex items-center gap-1 mt-1">
+                                            <Icon name="User" size={12} />
+                                            {item.responsible}
+                                          </p>
+                                        )}
                                       </div>
                                       <div className="text-right">
                                         <p className="text-sm text-green-600">Готово: {item.completed}/{item.total}</p>
@@ -190,6 +217,15 @@ export default function ChecklistsTab({ checklistList, setChecklistList, isChefO
                           />
                         </div>
                         <div className="space-y-2">
+                          <Label htmlFor="checklist-responsible">Ответственный повар (необязательно)</Label>
+                          <Input 
+                            id="checklist-responsible" 
+                            placeholder="ФИО повара"
+                            value={newChecklist.responsible}
+                            onChange={(e) => setNewChecklist({...newChecklist, responsible: e.target.value})}
+                          />
+                        </div>
+                        <div className="space-y-2">
                           <Label htmlFor="checklist-items">Пункты чек-листа (каждый с новой строки)</Label>
                           <Textarea 
                             id="checklist-items" 
@@ -227,20 +263,96 @@ export default function ChecklistsTab({ checklistList, setChecklistList, isChefO
                       <div>
                         <p className="font-semibold text-lg">{checklist.name}</p>
                         <p className="text-sm text-muted-foreground">{checklist.workshop}</p>
+                        {checklist.responsible && (
+                          <p className="text-xs text-secondary mt-1 flex items-center gap-1">
+                            <Icon name="User" size={12} />
+                            Ответственный: {checklist.responsible}
+                          </p>
+                        )}
                         {checklist.completedDate && (
                           <p className="text-xs text-primary mt-1">Заполнено: {checklist.completedDate}</p>
                         )}
                       </div>
                     </div>
                     <div className="flex gap-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => handleEditChecklist(checklist)}
-                      >
-                        <Icon name="Edit" size={16} className="mr-2" />
-                        Редактировать
-                      </Button>
+                      {assigningResponsible === checklist.id ? (
+                        <div className="flex gap-2 items-center">
+                          <Input
+                            placeholder="ФИО повара"
+                            value={responsibleName}
+                            onChange={(e) => setResponsibleName(e.target.value)}
+                            className="h-9 w-48"
+                          />
+                          <Button 
+                            variant="default" 
+                            size="sm"
+                            onClick={() => handleAssignResponsible(checklist.id)}
+                          >
+                            <Icon name="Check" size={16} />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => {
+                              setAssigningResponsible(null);
+                              setResponsibleName('');
+                            }}
+                          >
+                            <Icon name="X" size={16} />
+                          </Button>
+                        </div>
+                      ) : (
+                        <>
+                          {checklist.responsible ? (
+                            <>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => {
+                                  setAssigningResponsible(checklist.id);
+                                  setResponsibleName(checklist.responsible || '');
+                                }}
+                              >
+                                <Icon name="User" size={16} className="mr-2" />
+                                Изменить
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={() => {
+                                  const updated = checklistList.map(cl => 
+                                    cl.id === checklist.id ? { ...cl, responsible: null } : cl
+                                  );
+                                  setChecklistList(updated);
+                                  localStorage.setItem('kitchenCosmo_checklists', JSON.stringify(updated));
+                                }}
+                              >
+                                <Icon name="UserX" size={16} />
+                              </Button>
+                            </>
+                          ) : (
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => {
+                                setAssigningResponsible(checklist.id);
+                                setResponsibleName('');
+                              }}
+                            >
+                              <Icon name="UserPlus" size={16} className="mr-2" />
+                              Назначить
+                            </Button>
+                          )}
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handleEditChecklist(checklist)}
+                          >
+                            <Icon name="Edit" size={16} className="mr-2" />
+                            Редактировать
+                          </Button>
+                        </>
+                      )}
                       <Button 
                         variant="ghost" 
                         size="sm"
@@ -291,6 +403,12 @@ export default function ChecklistsTab({ checklistList, setChecklistList, isChefO
                       <div>
                         <p className="font-semibold text-lg">{checklist.name}</p>
                         <p className="text-sm text-muted-foreground">{checklist.workshop}</p>
+                        {checklist.responsible && (
+                          <p className="text-xs text-secondary mt-1 flex items-center gap-1">
+                            <Icon name="User" size={12} />
+                            Ответственный: {checklist.responsible}
+                          </p>
+                        )}
                         {checklist.completedDate && (
                           <p className="text-xs text-primary mt-1">Заполнено: {checklist.completedDate}</p>
                         )}
