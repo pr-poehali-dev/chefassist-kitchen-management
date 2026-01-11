@@ -238,10 +238,13 @@ const Index = () => {
           <WriteoffTab />
         </Tabs>
 
-        <Dialog open={showWorkshopReport} onOpenChange={(open) => {
-          setShowWorkshopReport(open);
-          if (!open) setExpandedStatus(null);
-        }>
+        <Dialog 
+          open={showWorkshopReport} 
+          onOpenChange={(open) => {
+            setShowWorkshopReport(open);
+            if (!open) setExpandedStatus(null);
+          }}
+        >
           <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Отчёт по цехам</DialogTitle>
