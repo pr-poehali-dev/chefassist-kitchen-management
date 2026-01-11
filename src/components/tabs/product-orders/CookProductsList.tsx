@@ -1,6 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { TabsContent } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import Icon from '@/components/ui/icon';
 import { useState } from 'react';
@@ -92,7 +91,7 @@ const CookProductsList = ({
   const selectedCount = Object.keys(selectedProducts).length;
 
   return (
-    <TabsContent value="orders" className="space-y-4 mt-0">
+    <div className="space-y-4 mt-0">
       {activeOrders.length > 0 && (
         <div className="space-y-3">
           <h3 className="text-lg font-semibold flex items-center gap-2">
@@ -242,7 +241,7 @@ const CookProductsList = ({
           )}
         </>
       )}
-    </TabsContent>
+    </div>
   );
 };
 

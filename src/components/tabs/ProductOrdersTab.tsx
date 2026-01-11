@@ -428,14 +428,16 @@ const ProductOrdersTab = ({ restaurantId, userId, isChefOrSousChef }: ProductOrd
             />
           </>
         ) : (
-          <CookProductsList
-            categories={categories}
-            products={products}
-            activeOrders={activeOrders}
-            selectedProducts={selectedProducts}
-            onToggleProduct={handleToggleProduct}
-            onCreateOrder={handleCreateOrder}
-          />
+          <TabsContent value="orders" className="space-y-4 mt-0">
+            <CookProductsList
+              categories={categories}
+              products={products}
+              activeOrders={activeOrders}
+              selectedProducts={selectedProducts}
+              onToggleProduct={handleToggleProduct}
+              onCreateOrder={handleCreateOrder}
+            />
+          </TabsContent>
         )}
       </Tabs>
 
