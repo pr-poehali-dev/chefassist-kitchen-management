@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import * as XLSX from 'xlsx';
 
 interface InventoryTabProps {
   activeInventory: any;
@@ -90,6 +91,42 @@ export default function InventoryTab({
     const updated = inventoryHistory.filter((inv: any) => inv.id !== invId);
     setInventoryHistory(updated);
     localStorage.setItem('kitchenCosmo_inventoryHistory', JSON.stringify(updated));
+  };
+
+  const handleExportToExcel = (inventory: any) => {
+    const data = inventory.products.map((product: any, idx: number) => {
+      const totalQuantity = product.entries && product.entries.length > 0 
+        ? product.entries.reduce((sum: number, e: any) => sum + e.quantity, 0)
+        : 0;
+      const uniqueUsers = product.entries 
+        ? [...new Set(product.entries.map((e: any) => e.user))]
+        : [];
+      
+      return {
+        '№': idx + 1,
+        'Наименование': product.name,
+        'Тип': product.type === 'semi' ? 'Полуфабрикат' : 'Продукт',
+        'Количество (г)': totalQuantity || 0,
+        'Внесли данные': uniqueUsers.join(', ') || 'Не внесено',
+        'Записей': product.entries ? product.entries.length : 0
+      };
+    });
+
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Инвентаризация');
+
+    worksheet['!cols'] = [
+      { wch: 5 },
+      { wch: 30 },
+      { wch: 15 },
+      { wch: 15 },
+      { wch: 30 },
+      { wch: 10 }
+    ];
+
+    const fileName = `Инвентаризация_${new Date(inventory.date).toLocaleDateString('ru-RU').replace(/\./g, '-')}.xlsx`;
+    XLSX.writeFile(workbook, fileName);
   };
 
   const handleSubmitEntry = (productIndex: number, quantity: number) => {
@@ -469,9 +506,13 @@ export default function InventoryTab({
                 </div>
               </div>
               <div className="flex gap-2">
-                <Button variant="outline" className="flex-1">
+                <Button 
+                  variant="outline" 
+                  className="flex-1"
+                  onClick={() => handleExportToExcel(viewInventoryReport)}
+                >
                   <Icon name="Download" size={16} className="mr-2" />
-                  Скачать отчёт
+                  Скачать Excel
                 </Button>
                 <Button variant="outline" className="flex-1">
                   <Icon name="Printer" size={16} className="mr-2" />
