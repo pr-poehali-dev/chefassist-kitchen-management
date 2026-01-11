@@ -224,13 +224,13 @@ const CookProductsList = ({
           </div>
 
           {selectedCount > 0 && (
-            <div className="fixed bottom-6 right-6 z-50">
+            <div className="fixed bottom-4 left-4 right-4 sm:bottom-6 sm:right-6 sm:left-auto z-50 safe-bottom">
               <button
                 onClick={() => {
                   onCreateOrder();
                   setIsCreatingOrder(false);
                 }}
-                className="bg-primary text-primary-foreground hover:bg-primary/90 px-6 py-4 rounded-full shadow-2xl flex items-center gap-3 text-lg font-semibold transition-all hover:scale-105"
+                className="w-full sm:w-auto bg-primary text-primary-foreground active:bg-primary/80 px-6 py-4 sm:py-3 rounded-full shadow-2xl flex items-center justify-center gap-3 text-base sm:text-lg font-semibold transition-all active:scale-95 touch-target"
               >
                 <Icon name="ShoppingCart" size={24} />
                 Заказать ({selectedCount})

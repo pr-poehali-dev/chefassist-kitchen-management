@@ -72,30 +72,30 @@ const LoginPage = () => {
 
   if (showInviteLink) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 flex items-center justify-center p-4 safe-top safe-bottom">
         <Card className="w-full max-w-md animate-scale-in">
           <CardHeader className="text-center">
-            <Icon name="CheckCircle2" size={64} className="mx-auto text-green-500 mb-4" />
-            <CardTitle className="text-2xl">Ресторан создан!</CardTitle>
-            <p className="text-muted-foreground mt-2">Отправьте эту ссылку сотрудникам</p>
+            <Icon name="CheckCircle2" size={56} className="mx-auto text-green-500 mb-3" />
+            <CardTitle className="text-xl sm:text-2xl">Ресторан создан!</CardTitle>
+            <p className="text-sm text-muted-foreground mt-2">Отправьте эту ссылку сотрудникам</p>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex justify-center p-6 bg-white rounded-lg">
+            <div className="flex justify-center p-4 sm:p-6 bg-white rounded-lg">
               <QRCodeSVG 
                 value={generatedInviteLink} 
-                size={200}
+                size={Math.min(window.innerWidth - 120, 200)}
                 level="H"
                 includeMargin={true}
               />
             </div>
-            <div className="p-4 bg-muted rounded-lg break-all text-sm">
+            <div className="p-3 sm:p-4 bg-muted rounded-lg break-all text-xs sm:text-sm">
               {generatedInviteLink}
             </div>
-            <Button onClick={copyInviteLink} className="w-full gap-2">
-              <Icon name="Copy" size={18} />
+            <Button onClick={copyInviteLink} className="w-full gap-2 h-12 touch-target text-base">
+              <Icon name="Copy" size={20} />
               Скопировать ссылку
             </Button>
-            <p className="text-xs text-center text-muted-foreground">
+            <p className="text-xs text-center text-muted-foreground px-4">
               Отсканируйте QR-код или отправьте ссылку сотрудникам
             </p>
             <Button onClick={() => window.location.reload()} variant="outline" className="w-full">
@@ -109,43 +109,42 @@ const LoginPage = () => {
 
   if (step === 'choice') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 flex items-center justify-center p-4 safe-top safe-bottom">
         <Card className="w-full max-w-md animate-scale-in">
-          <CardHeader className="text-center">
-            <div className="mb-4">
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+          <CardHeader className="text-center pb-4">
+            <div className="mb-2">
+              <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
                 KitchenCosmo
               </h1>
-              <p className="text-muted-foreground mt-2">Добро пожаловать</p>
+              <p className="text-sm text-muted-foreground mt-2">Добро пожаловать</p>
             </div>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-3">
             <Button 
               onClick={() => setStep('chef_register')} 
-              className="w-full h-20 text-lg flex items-center gap-4"
+              className="w-full h-auto py-4 text-base flex items-center gap-4 touch-target"
             >
-              <Icon name="Store" size={32} />
+              <Icon name="Store" size={28} className="flex-shrink-0" />
               <div className="text-left flex-1">
                 <p className="font-bold">Создать ресторан</p>
-                <p className="text-xs opacity-80">Я шеф-повар</p>
+                <p className="text-xs opacity-80 font-normal">Я шеф-повар</p>
               </div>
             </Button>
             <Button 
               onClick={() => setStep('employee_join')} 
               variant="outline"
-              className="w-full h-20 text-lg flex items-center gap-4"
+              className="w-full h-auto py-4 text-base flex items-center gap-4 touch-target"
             >
-              <Icon name="UserPlus" size={32} />
+              <Icon name="UserPlus" size={28} className="flex-shrink-0" />
               <div className="text-left flex-1">
                 <p className="font-bold">Присоединиться</p>
-                <p className="text-xs text-muted-foreground">У меня есть приглашение</p>
+                <p className="text-xs text-muted-foreground font-normal">У меня есть приглашение</p>
               </div>
             </Button>
             <Button 
               onClick={handleClearOldData} 
               variant="ghost"
-              size="sm"
-              className="w-full text-xs text-muted-foreground"
+              className="w-full text-xs text-muted-foreground h-10 mt-2 touch-target"
             >
               <Icon name="RefreshCw" size={14} className="mr-2" />
               Очистить старые данные
@@ -158,19 +157,18 @@ const LoginPage = () => {
 
   if (step === 'chef_register') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 flex items-center justify-center p-4 safe-top safe-bottom">
         <Card className="w-full max-w-md animate-scale-in">
           <CardHeader>
             <Button 
               variant="ghost" 
-              size="sm" 
               onClick={() => setStep('choice')}
-              className="w-fit mb-2"
+              className="w-fit mb-2 h-10 touch-target"
             >
-              <Icon name="ArrowLeft" size={18} className="mr-2" />
+              <Icon name="ArrowLeft" size={20} className="mr-2" />
               Назад
             </Button>
-            <CardTitle>Создание ресторана</CardTitle>
+            <CardTitle className="text-xl sm:text-2xl">Создание ресторана</CardTitle>
             <p className="text-sm text-muted-foreground">Регистрация шеф-повара</p>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -180,24 +178,26 @@ const LoginPage = () => {
               </div>
             )}
             <div className="space-y-2">
-              <Label htmlFor="chef-name">Ваше ФИО</Label>
+              <Label htmlFor="chef-name" className="text-base">Ваше ФИО</Label>
               <Input
                 id="chef-name"
                 placeholder="Иван Иванов"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
+                className="h-12 text-base"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="restaurant-name">Название ресторана</Label>
+              <Label htmlFor="restaurant-name" className="text-base">Название ресторана</Label>
               <Input
                 id="restaurant-name"
                 placeholder="Моя кухня"
                 value={restaurantName}
                 onChange={(e) => setRestaurantName(e.target.value)}
+                className="h-12 text-base"
               />
             </div>
-            <Button onClick={handleCreateRestaurant} className="w-full">
+            <Button onClick={handleCreateRestaurant} className="w-full h-12 text-base touch-target">
               Создать ресторан
             </Button>
           </CardContent>
@@ -207,19 +207,18 @@ const LoginPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 flex items-center justify-center p-4 safe-top safe-bottom">
       <Card className="w-full max-w-md animate-scale-in">
         <CardHeader>
           <Button 
             variant="ghost" 
-            size="sm" 
             onClick={() => setStep('choice')}
-            className="w-fit mb-2"
+            className="w-fit mb-2 h-10 touch-target"
           >
-            <Icon name="ArrowLeft" size={18} className="mr-2" />
+            <Icon name="ArrowLeft" size={20} className="mr-2" />
             Назад
           </Button>
-          <CardTitle>Присоединение к ресторану</CardTitle>
+          <CardTitle className="text-xl sm:text-2xl">Присоединение к ресторану</CardTitle>
           <p className="text-sm text-muted-foreground">Регистрация сотрудника</p>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -229,17 +228,18 @@ const LoginPage = () => {
             </div>
           )}
           <div className="space-y-2">
-            <Label htmlFor="employee-name">Ваше ФИО</Label>
+            <Label htmlFor="employee-name" className="text-base">Ваше ФИО</Label>
             <Input
               id="employee-name"
               placeholder="Иван Иванов"
               value={name}
               onChange={(e) => setName(e.target.value)}
+              className="h-12 text-base"
             />
           </div>
           
           <div className="space-y-3">
-            <Label>Ваша должность</Label>
+            <Label className="text-base">Ваша должность</Label>
             <div className="grid gap-2">
               {[
                 { id: 'sous_chef', label: 'Су-шеф', icon: 'Users' },
@@ -248,16 +248,16 @@ const LoginPage = () => {
                 <button
                   key={role.id}
                   onClick={() => setSelectedRole(role.id as 'sous_chef' | 'cook')}
-                  className={`p-3 rounded-lg border-2 transition-all flex items-center gap-3 ${
+                  className={`p-4 rounded-lg border-2 transition-all flex items-center gap-3 touch-target ${
                     selectedRole === role.id
                       ? 'border-primary bg-primary/10'
-                      : 'border-border hover:border-primary/50'
+                      : 'border-border active:border-primary/50'
                   }`}
                 >
-                  <Icon name={role.icon} size={20} />
-                  <span className="font-medium">{role.label}</span>
+                  <Icon name={role.icon} size={22} />
+                  <span className="font-medium text-base">{role.label}</span>
                   {selectedRole === role.id && (
-                    <Icon name="CheckCircle2" size={20} className="text-primary ml-auto" />
+                    <Icon name="CheckCircle2" size={22} className="text-primary ml-auto" />
                   )}
                 </button>
               ))}
@@ -265,17 +265,17 @@ const LoginPage = () => {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="invite-code">Код приглашения</Label>
+            <Label htmlFor="invite-code" className="text-base">Код приглашения</Label>
             <Input
               id="invite-code"
               placeholder="ABC123XY"
               value={inviteCode}
               onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
-              className="uppercase"
+              className="uppercase h-12 text-base"
             />
           </div>
 
-          <Button onClick={handleJoinRestaurant} className="w-full">
+          <Button onClick={handleJoinRestaurant} className="w-full h-12 text-base touch-target">
             Присоединиться
           </Button>
         </CardContent>

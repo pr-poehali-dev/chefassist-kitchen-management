@@ -202,73 +202,73 @@ const Index = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-      <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 max-w-7xl">
-        <header className="mb-6 sm:mb-8 animate-fade-in">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-            <div>
-              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 safe-top safe-bottom">
+      <div className="container mx-auto px-4 py-3 sm:py-6 max-w-7xl pb-safe">
+        <header className="mb-4 sm:mb-8 animate-fade-in">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4 sm:mb-6">
+            <div className="flex-1">
+              <h1 className="text-xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
                 KitchenCosmo
               </h1>
-              <p className="text-sm sm:text-base text-muted-foreground mt-1">Система управления профессиональной кухней</p>
+              <p className="text-xs sm:text-base text-muted-foreground mt-1">Система управления кухней</p>
             </div>
-            <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
-              <Badge variant="secondary" className="text-xs sm:text-sm px-2 sm:px-3 py-1 truncate max-w-[180px] sm:max-w-none">
-                {user.role === 'chef' ? 'Шеф-повар' : user.role === 'sous_chef' ? 'Су-шеф' : 'Повар-универсал'}: {user.name}
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <Badge variant="secondary" className="text-xs px-3 py-1.5 truncate flex-1 sm:flex-initial">
+                {user.role === 'chef' ? 'Шеф' : user.role === 'sous_chef' ? 'Су-шеф' : 'Повар'}: {user.name}
               </Badge>
-              <Button variant="outline" size="icon" className="hover-scale flex-shrink-0">
-                <Icon name="Bell" size={18} />
+              <Button variant="outline" size="icon" className="touch-target flex-shrink-0 h-10 w-10">
+                <Icon name="Bell" size={20} />
               </Button>
-              <Button variant="outline" size="icon" className="hover-scale flex-shrink-0" onClick={logout}>
-                <Icon name="LogOut" size={18} />
+              <Button variant="outline" size="icon" className="touch-target flex-shrink-0 h-10 w-10" onClick={logout}>
+                <Icon name="LogOut" size={20} />
               </Button>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-            <Card className="border-primary/20 hover:border-primary/40 transition-all hover:shadow-lg hover:shadow-primary/10">
-              <CardContent className="pt-6">
-                <div className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Card className="border-primary/20 hover:border-primary/40 transition-all active:scale-98">
+              <CardContent className="pt-4 sm:pt-6">
+                <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-muted-foreground mb-1">Активные заявки</p>
-                      <p className="text-3xl font-bold text-primary">{orderStats.total}</p>
+                      <p className="text-xs sm:text-sm text-muted-foreground mb-1">Активные заявки</p>
+                      <p className="text-2xl sm:text-3xl font-bold text-primary">{orderStats.total}</p>
                     </div>
-                    <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                      <Icon name="ShoppingCart" size={24} className="text-primary" />
+                    <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                      <Icon name="ShoppingCart" size={20} className="text-primary sm:w-6 sm:h-6" />
                     </div>
                   </div>
                   {orderStats.total > 0 && (
                     <div className="grid grid-cols-3 gap-2 pt-2 border-t">
                       <div 
-                        className="text-center cursor-pointer hover:bg-yellow-500/10 rounded-lg p-2 transition-colors"
+                        className="text-center cursor-pointer active:bg-yellow-500/20 rounded-lg p-2.5 sm:p-2 transition-colors touch-target"
                         onClick={() => {
                           setSelectedOrderStatus('pending');
                           setShowOrdersDialog(true);
                         }}
                       >
-                        <p className="text-xs text-muted-foreground mb-1">Ожидают</p>
-                        <p className="text-lg font-bold text-yellow-600">{orderStats.pending}</p>
+                        <p className="text-[10px] sm:text-xs text-muted-foreground mb-1">Ожидают</p>
+                        <p className="text-base sm:text-lg font-bold text-yellow-600">{orderStats.pending}</p>
                       </div>
                       <div 
-                        className="text-center cursor-pointer hover:bg-blue-500/10 rounded-lg p-2 transition-colors"
+                        className="text-center cursor-pointer active:bg-blue-500/20 rounded-lg p-2.5 sm:p-2 transition-colors touch-target"
                         onClick={() => {
                           setSelectedOrderStatus('ordered');
                           setShowOrdersDialog(true);
                         }}
                       >
-                        <p className="text-xs text-muted-foreground mb-1">Заказано</p>
-                        <p className="text-lg font-bold text-blue-600">{orderStats.ordered}</p>
+                        <p className="text-[10px] sm:text-xs text-muted-foreground mb-1">Заказано</p>
+                        <p className="text-base sm:text-lg font-bold text-blue-600">{orderStats.ordered}</p>
                       </div>
                       <div 
-                        className="text-center cursor-pointer hover:bg-green-500/10 rounded-lg p-2 transition-colors"
+                        className="text-center cursor-pointer active:bg-green-500/20 rounded-lg p-2.5 sm:p-2 transition-colors touch-target"
                         onClick={() => {
                           setSelectedOrderStatus('completed');
                           setShowOrdersDialog(true);
                         }}
                       >
-                        <p className="text-xs text-muted-foreground mb-1">Выполнено</p>
-                        <p className="text-lg font-bold text-green-600">{orderStats.completed}</p>
+                        <p className="text-[10px] sm:text-xs text-muted-foreground mb-1">Выполнено</p>
+                        <p className="text-base sm:text-lg font-bold text-green-600">{orderStats.completed}</p>
                       </div>
                     </div>
                   )}
@@ -278,18 +278,18 @@ const Index = () => {
 
             {isChefOrSousChef() && (
             <Card 
-              className="border-secondary/20 hover:border-secondary/40 transition-all hover:shadow-lg hover:shadow-secondary/10 cursor-pointer"
+              className="border-secondary/20 hover:border-secondary/40 transition-all active:scale-98 cursor-pointer touch-target"
               onClick={() => setShowWorkshopReport(true)}
             >
-              <CardContent className="pt-6">
+              <CardContent className="pt-4 sm:pt-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-muted-foreground mb-1">Отчёты по цехам</p>
-                    <p className="text-3xl font-bold text-secondary">{totalIssues}</p>
-                    <p className="text-xs text-muted-foreground mt-1">проблем выявлено</p>
+                    <p className="text-xs sm:text-sm text-muted-foreground mb-1">Отчёты по цехам</p>
+                    <p className="text-2xl sm:text-3xl font-bold text-secondary">{totalIssues}</p>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">проблем выявлено</p>
                   </div>
-                  <div className="h-12 w-12 rounded-full bg-secondary/10 flex items-center justify-center">
-                    <Icon name="BarChart" size={24} className="text-secondary" />
+                  <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-secondary/10 flex items-center justify-center">
+                    <Icon name="BarChart" size={20} className="text-secondary sm:w-6 sm:h-6" />
                   </div>
                 </div>
               </CardContent>
@@ -298,37 +298,40 @@ const Index = () => {
           </div>
         </header>
 
-        <Tabs defaultValue="ttk" className="space-y-4 sm:space-y-6">
-          <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 lg:w-auto lg:inline-grid bg-card/50 backdrop-blur-sm gap-1">
-            <TabsTrigger value="ttk" className="gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-4">
-              <Icon name="FileText" size={16} />
-              <span>ТТК</span>
-            </TabsTrigger>
-            <TabsTrigger value="checklists" className="gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-4">
-              <Icon name="CheckSquare" size={16} />
-              <span>Чек-листы</span>
-            </TabsTrigger>
-            <TabsTrigger value="products" className="gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-4">
-              <Icon name="ShoppingCart" size={16} />
-              <span className="hidden sm:inline">Продукты</span>
-              <span className="sm:hidden">Прод.</span>
-            </TabsTrigger>
-            {isChefOrSousChef() && (
-              <TabsTrigger value="employees" className="gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-4">
-                <Icon name="Users" size={16} />
-                <span>Сотр.</span>
+        <Tabs defaultValue="ttk" className="space-y-3 sm:space-y-6">
+          <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm pb-2 -mx-4 px-4">
+            <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 lg:w-auto lg:inline-grid bg-card/50 backdrop-blur-sm gap-1 h-auto p-1">
+              <TabsTrigger value="ttk" className="gap-1 sm:gap-2 text-xs sm:text-sm px-3 py-2.5 sm:px-4 touch-target">
+                <Icon name="FileText" size={18} />
+                <span>ТТК</span>
               </TabsTrigger>
-            )}
-            <TabsTrigger value="inventory" className="gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-4">
-              <Icon name="ClipboardList" size={16} />
-              <span className="hidden sm:inline">Инвентаризация</span>
-              <span className="sm:hidden">Инвент.</span>
-            </TabsTrigger>
-            <TabsTrigger value="writeoff" className="gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-4">
-              <Icon name="MinusCircle" size={16} />
-              <span>Списание</span>
-            </TabsTrigger>
-          </TabsList>
+              <TabsTrigger value="checklists" className="gap-1 sm:gap-2 text-xs sm:text-sm px-3 py-2.5 sm:px-4 touch-target">
+                <Icon name="CheckSquare" size={18} />
+                <span className="hidden xs:inline">Чек-листы</span>
+                <span className="xs:hidden">Чек</span>
+              </TabsTrigger>
+              <TabsTrigger value="products" className="gap-1 sm:gap-2 text-xs sm:text-sm px-3 py-2.5 sm:px-4 touch-target">
+                <Icon name="ShoppingCart" size={18} />
+                <span className="hidden sm:inline">Продукты</span>
+                <span className="sm:hidden">Прод.</span>
+              </TabsTrigger>
+              {isChefOrSousChef() && (
+                <TabsTrigger value="employees" className="gap-1 sm:gap-2 text-xs sm:text-sm px-3 py-2.5 sm:px-4 touch-target">
+                  <Icon name="Users" size={18} />
+                  <span>Сотр.</span>
+                </TabsTrigger>
+              )}
+              <TabsTrigger value="inventory" className="gap-1 sm:gap-2 text-xs sm:text-sm px-3 py-2.5 sm:px-4 touch-target">
+                <Icon name="ClipboardList" size={18} />
+                <span className="hidden sm:inline">Инвентаризация</span>
+                <span className="sm:hidden">Инв.</span>
+              </TabsTrigger>
+              <TabsTrigger value="writeoff" className="gap-1 sm:gap-2 text-xs sm:text-sm px-3 py-2.5 sm:px-4 touch-target">
+                <Icon name="MinusCircle" size={18} />
+                <span>Списан.</span>
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
           <TtkTab 
             ttkList={ttkList} 
