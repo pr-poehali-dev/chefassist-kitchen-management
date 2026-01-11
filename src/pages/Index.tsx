@@ -9,6 +9,7 @@ import LoginPage from '@/components/LoginPage';
 import TtkTab from '@/components/tabs/TtkTab';
 import ChecklistsTab from '@/components/tabs/ChecklistsTab';
 import InventoryTab from '@/components/tabs/InventoryTab';
+import EmployeesTab from '@/components/tabs/EmployeesTab';
 import { OrdersTab, WriteoffTab } from '@/components/tabs/OrdersAndWriteoffTabs';
 import {
   Dialog,
@@ -198,7 +199,7 @@ const Index = () => {
         </header>
 
         <Tabs defaultValue="ttk" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-grid bg-card/50 backdrop-blur-sm">
+          <TabsList className="grid w-full grid-cols-6 lg:w-auto lg:inline-grid bg-card/50 backdrop-blur-sm">
             <TabsTrigger value="ttk" className="gap-2">
               <Icon name="FileText" size={18} />
               <span className="hidden sm:inline">ТТК</span>
@@ -219,6 +220,12 @@ const Index = () => {
               <Icon name="MinusCircle" size={18} />
               <span className="hidden sm:inline">Списание</span>
             </TabsTrigger>
+            {isChefOrSousChef() && (
+              <TabsTrigger value="employees" className="gap-2">
+                <Icon name="Users" size={18} />
+                <span className="hidden sm:inline">Сотрудники</span>
+              </TabsTrigger>
+            )}
           </TabsList>
 
           <TtkTab 
@@ -246,6 +253,8 @@ const Index = () => {
           <OrdersTab />
           
           <WriteoffTab />
+
+          {isChefOrSousChef() && <EmployeesTab />}
         </Tabs>
 
         <Dialog 
