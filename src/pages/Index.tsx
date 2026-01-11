@@ -34,6 +34,9 @@ const Index = () => {
     ];
   });
   const [newTtk, setNewTtk] = useState({ name: '', category: '', output: '', ingredients: '', tech: '' });
+  const [viewTtk, setViewTtk] = useState<any>(null);
+  const [inventoryProducts, setInventoryProducts] = useState<string>('');
+  const [activeInventory, setActiveInventory] = useState<any>(null);
   const [checklistList, setChecklistList] = useState(() => {
     const saved = localStorage.getItem('kitchenCosmo_checklists');
     return saved ? JSON.parse(saved) : [
@@ -50,6 +53,7 @@ const Index = () => {
     ];
   });
   const [newChecklist, setNewChecklist] = useState({ name: '', workshop: '', items: '' });
+  const [showChecklistStats, setShowChecklistStats] = useState(false);
 
   const mockIngredients = [
     { id: 1, name: 'Томаты', category: 'Овощи', quantity: 15, unit: 'кг', minStock: 10, price: 120 },
@@ -100,12 +104,45 @@ const Index = () => {
       if (cl.id === checklistId) {
         const items = [...cl.items];
         items[itemIndex] = { ...items[itemIndex], status: newStatus };
-        return { ...cl, items };
+        const completedDate = new Date().toISOString().split('T')[0];
+        return { ...cl, items, completedDate };
       }
       return cl;
     });
     setChecklistList(updated);
     localStorage.setItem('kitchenCosmo_checklists', JSON.stringify(updated));
+  };
+
+  const handleStartInventory = () => {
+    if (!inventoryProducts.trim()) return;
+    const products = inventoryProducts.split('\n').filter(p => p.trim()).map(p => ({ name: p.trim(), quantity: 0 }));
+    const inventory = {
+      id: Date.now(),
+      name: `Инвентаризация ${new Date().toLocaleDateString()}`,
+      date: new Date().toISOString().split('T')[0],
+      responsible: user.name,
+      products,
+      status: 'in_progress'
+    };
+    setActiveInventory(inventory);
+    setInventoryProducts('');
+  };
+
+  const getChecklistStats = () => {
+    const stats: any = {};
+    checklistList.forEach(cl => {
+      if (!stats[cl.workshop]) stats[cl.workshop] = [];
+      const completed = cl.items.filter((i: any) => i.status === 'done').length;
+      const inStop = cl.items.filter((i: any) => i.status === 'in_stop').length;
+      stats[cl.workshop].push({
+        name: cl.name,
+        date: cl.completedDate || 'Не заполнен',
+        completed,
+        total: cl.items.length,
+        inStop
+      });
+    });
+    return stats;
   };
 
   return (
@@ -310,10 +347,65 @@ const Index = () => {
                             <p className="whitespace-pre-wrap">{recipe.ingredients}</p>
                           </div>
                           <div className="flex gap-2 pt-2">
-                            <Button size="sm" variant="outline" className="flex-1 gap-2">
-                              <Icon name="Eye" size={16} />
-                              Просмотр
-                            </Button>
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button size="sm" variant="outline" className="flex-1 gap-2" onClick={() => setViewTtk(recipe)}>
+                                  <Icon name="Eye" size={16} />
+                                  Просмотр
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent className="max-w-4xl">
+                                <DialogHeader>
+                                  <DialogTitle>{recipe.name}</DialogTitle>
+                                </DialogHeader>
+                                {viewTtk && (
+                                  <div className="space-y-4 pt-4">
+                                    <div className="grid grid-cols-2 gap-4">
+                                      <div>
+                                        <Label className="text-muted-foreground">Категория</Label>
+                                        <p className="font-medium">{viewTtk.category}</p>
+                                      </div>
+                                      <div>
+                                        <Label className="text-muted-foreground">Выход</Label>
+                                        <p className="font-medium">{viewTtk.output}г</p>
+                                      </div>
+                                    </div>
+                                    <div>
+                                      <Label className="text-muted-foreground mb-2 block">Состав продуктов</Label>
+                                      <div className="border rounded-lg overflow-hidden">
+                                        <table className="w-full">
+                                          <thead className="bg-muted">
+                                            <tr>
+                                              <th className="text-left p-3 border-b">Продукт</th>
+                                              <th className="text-left p-3 border-b">Количество</th>
+                                            </tr>
+                                          </thead>
+                                          <tbody>
+                                            {viewTtk.ingredients.split('\n').map((line: string, idx: number) => {
+                                              const parts = line.split(/(\d+[а-яА-Яa-zA-Z]+)/);
+                                              const product = parts[0]?.trim();
+                                              const quantity = parts[1]?.trim() || '-';
+                                              return (
+                                                <tr key={idx} className="border-b last:border-0">
+                                                  <td className="p-3">{product}</td>
+                                                  <td className="p-3 font-medium">{quantity}</td>
+                                                </tr>
+                                              );
+                                            })}
+                                          </tbody>
+                                        </table>
+                                      </div>
+                                    </div>
+                                    <div>
+                                      <Label className="text-muted-foreground mb-2 block">Технология приготовления</Label>
+                                      <div className="p-4 rounded-lg bg-muted/50 whitespace-pre-wrap">
+                                        {viewTtk.tech}
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
+                              </DialogContent>
+                            </Dialog>
                           </div>
                         </div>
                       </CardContent>
@@ -332,8 +424,14 @@ const Index = () => {
                     <Icon name="CheckSquare" />
                     Чек-листы
                   </CardTitle>
-                  {isChefOrSousChef() && (
-                    <Dialog>
+                  <div className="flex gap-2">
+                    {isChefOrSousChef() && (
+                      <>
+                        <Button variant="outline" size="sm" onClick={() => setShowChecklistStats(!showChecklistStats)}>
+                          <Icon name="BarChart3" size={16} className="mr-2" />
+                          Статистика
+                        </Button>
+                        <Dialog>
                       <DialogTrigger asChild>
                         <Button className="gap-2">
                           <Icon name="Plus" size={18} />
@@ -377,11 +475,46 @@ const Index = () => {
                         </div>
                       </DialogContent>
                     </Dialog>
-                  )}
+                      </>
+                    )}
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
+                {showChecklistStats && isChefOrSousChef() ? (
+                  <div className="space-y-6">
+                    <h3 className="text-lg font-semibold mb-4">Статистика выполнения по цехам</h3>
+                    {Object.entries(getChecklistStats()).map(([workshop, lists]: [string, any]) => (
+                      <Card key={workshop} className="border-primary/20">
+                        <CardHeader>
+                          <CardTitle className="text-base">{workshop}</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="space-y-3">
+                            {lists.map((item: any, idx: number) => (
+                              <div key={idx} className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
+                                <div>
+                                  <p className="font-medium">{item.name}</p>
+                                  <p className="text-xs text-muted-foreground">Дата: {item.date}</p>
+                                </div>
+                                <div className="flex items-center gap-4">
+                                  <div className="text-right">
+                                    <p className="text-sm font-semibold text-primary">{item.completed}/{item.total}</p>
+                                    <p className="text-xs text-muted-foreground">Выполнено</p>
+                                  </div>
+                                  {item.inStop > 0 && (
+                                    <Badge variant="destructive">{item.inStop} в стопе</Badge>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="space-y-4">
                   {checklistList.map((checklist) => (
                     <Card key={checklist.id} className="border-border/50 hover:border-primary/50 transition-all">
                       <CardContent className="pt-6">
@@ -393,6 +526,9 @@ const Index = () => {
                             <div>
                               <p className="font-semibold text-lg">{checklist.name}</p>
                               <p className="text-sm text-muted-foreground">{checklist.workshop}</p>
+                              {checklist.completedDate && (
+                                <p className="text-xs text-primary mt-1">Заполнено: {checklist.completedDate}</p>
+                              )}
                             </div>
                           </div>
                         </div>
@@ -426,7 +562,8 @@ const Index = () => {
                       </CardContent>
                     </Card>
                   ))}
-                </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -530,18 +667,20 @@ const Index = () => {
                           </DialogHeader>
                           <div className="space-y-4 pt-4">
                             <div className="space-y-2">
-                              <Label htmlFor="inv-name">Название</Label>
-                              <Input id="inv-name" placeholder="Плановая инвентаризация январь 2026" />
-                            </div>
-                            <div className="space-y-2">
-                              <Label htmlFor="inv-type">Тип</Label>
-                              <Input id="inv-type" placeholder="Плановая / Внеплановая" />
-                            </div>
-                            <div className="space-y-2">
                               <Label htmlFor="inv-responsible">Ответственный</Label>
                               <Input id="inv-responsible" placeholder="ФИО сотрудника" value={user.name} readOnly />
                             </div>
-                            <Button className="w-full">Начать инвентаризацию</Button>
+                            <div className="space-y-2">
+                              <Label htmlFor="inv-products">Перечень продуктов (каждый с новой строки)</Label>
+                              <Textarea 
+                                id="inv-products" 
+                                placeholder="Томаты&#10;Говядина&#10;Базилик&#10;Лосось&#10;Оливковое масло"
+                                rows={10}
+                                value={inventoryProducts}
+                                onChange={(e) => setInventoryProducts(e.target.value)}
+                              />
+                            </div>
+                            <Button className="w-full" onClick={handleStartInventory}>Начать инвентаризацию</Button>
                           </div>
                         </DialogContent>
                       </Dialog>
@@ -569,18 +708,20 @@ const Index = () => {
                 </div>
               </CardHeader>
               <CardContent>
-                {!isChefOrSousChef() ? (
+                {activeInventory && !isChefOrSousChef() ? (
                   <div className="space-y-3">
-                    <p className="text-sm text-muted-foreground mb-4">Выберите активную инвентаризацию и внесите количество продуктов</p>
-                    {mockIngredients.map((item) => (
-                      <div key={item.id} className="flex items-center justify-between p-4 rounded-lg border border-border/50 hover:border-border transition-all">
+                    <div className="mb-4 p-4 rounded-lg bg-primary/5">
+                      <p className="font-semibold">{activeInventory.name}</p>
+                      <p className="text-sm text-muted-foreground">Ответственный: {activeInventory.responsible}</p>
+                    </div>
+                    {activeInventory.products.map((item: any, idx: number) => (
+                      <div key={idx} className="flex items-center justify-between p-4 rounded-lg border border-border/50 hover:border-border transition-all">
                         <div className="flex items-center gap-4 flex-1">
                           <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-primary/10 to-secondary/10 flex items-center justify-center">
                             <Icon name="Package" size={24} className="text-primary" />
                           </div>
                           <div className="flex-1">
                             <p className="font-medium">{item.name}</p>
-                            <p className="text-sm text-muted-foreground">{item.category}</p>
                           </div>
                         </div>
                         <div className="flex items-center gap-3">
@@ -588,6 +729,12 @@ const Index = () => {
                             type="number"
                             placeholder="Граммы"
                             className="w-32"
+                            value={item.quantity || ''}
+                            onChange={(e) => {
+                              const updated = {...activeInventory};
+                              updated.products[idx].quantity = Number(e.target.value);
+                              setActiveInventory(updated);
+                            }}
                           />
                           <Button size="sm">
                             <Icon name="Check" size={16} className="mr-2" />
@@ -596,6 +743,11 @@ const Index = () => {
                         </div>
                       </div>
                     ))}
+                  </div>
+                ) : !isChefOrSousChef() ? (
+                  <div className="text-center py-12">
+                    <Icon name="Package" size={48} className="mx-auto text-muted-foreground mb-4" />
+                    <p className="text-muted-foreground">Шеф или су-шеф должны начать инвентаризацию</p>
                   </div>
                 ) : (
                   <div className="space-y-4">
