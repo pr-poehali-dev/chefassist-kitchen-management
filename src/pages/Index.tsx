@@ -73,6 +73,7 @@ const Index = () => {
   ];
 
   const [showWorkshopReport, setShowWorkshopReport] = useState(false);
+  const [expandedStatus, setExpandedStatus] = useState<{workshop: string, status: string} | null>(null);
 
   const lowStockItems = mockIngredients.filter(item => item.quantity < item.minStock);
   const totalInventoryValue = mockIngredients.reduce((sum, item) => sum + (item.quantity * item.price), 0);
@@ -81,13 +82,29 @@ const Index = () => {
     const stats: any = {};
     checklistList.forEach(cl => {
       if (!stats[cl.workshop]) {
-        stats[cl.workshop] = { done: 0, inRestriction: 0, inStop: 0, pending: 0 };
+        stats[cl.workshop] = { 
+          done: 0, 
+          inRestriction: 0, 
+          inStop: 0, 
+          pending: 0,
+          items: { done: [], inRestriction: [], inStop: [], pending: [] }
+        };
       }
       cl.items.forEach((item: any) => {
-        if (item.status === 'done') stats[cl.workshop].done++;
-        else if (item.status === 'in_restriction') stats[cl.workshop].inRestriction++;
-        else if (item.status === 'in_stop') stats[cl.workshop].inStop++;
-        else stats[cl.workshop].pending++;
+        const itemWithChecklist = { ...item, checklistName: cl.name };
+        if (item.status === 'done') {
+          stats[cl.workshop].done++;
+          stats[cl.workshop].items.done.push(itemWithChecklist);
+        } else if (item.status === 'in_restriction') {
+          stats[cl.workshop].inRestriction++;
+          stats[cl.workshop].items.inRestriction.push(itemWithChecklist);
+        } else if (item.status === 'in_stop') {
+          stats[cl.workshop].inStop++;
+          stats[cl.workshop].items.inStop.push(itemWithChecklist);
+        } else {
+          stats[cl.workshop].pending++;
+          stats[cl.workshop].items.pending.push(itemWithChecklist);
+        }
       });
     });
     return stats;
@@ -221,7 +238,10 @@ const Index = () => {
           <WriteoffTab />
         </Tabs>
 
-        <Dialog open={showWorkshopReport} onOpenChange={setShowWorkshopReport}>
+        <Dialog open={showWorkshopReport} onOpenChange={(open) => {
+          setShowWorkshopReport(open);
+          if (!open) setExpandedStatus(null);
+        }>
           <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Отчёт по цехам</DialogTitle>
@@ -244,28 +264,40 @@ const Index = () => {
                         </Badge>
                       </div>
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/20">
+                        <div 
+                          className="p-4 rounded-lg bg-green-500/10 border border-green-500/20 cursor-pointer hover:bg-green-500/20 transition-all"
+                          onClick={() => setExpandedStatus(expandedStatus?.workshop === workshop && expandedStatus?.status === 'done' ? null : { workshop, status: 'done' })}
+                        >
                           <div className="flex items-center gap-2 mb-2">
                             <Icon name="Check" size={18} className="text-green-600" />
                             <p className="text-sm font-medium">Готово</p>
                           </div>
                           <p className="text-2xl font-bold text-green-600">{stats.done}</p>
                         </div>
-                        <div className="p-4 rounded-lg bg-orange-500/10 border border-orange-500/20">
+                        <div 
+                          className="p-4 rounded-lg bg-orange-500/10 border border-orange-500/20 cursor-pointer hover:bg-orange-500/20 transition-all"
+                          onClick={() => setExpandedStatus(expandedStatus?.workshop === workshop && expandedStatus?.status === 'inRestriction' ? null : { workshop, status: 'inRestriction' })}
+                        >
                           <div className="flex items-center gap-2 mb-2">
                             <Icon name="AlertTriangle" size={18} className="text-orange-600" />
                             <p className="text-sm font-medium">В ограничении</p>
                           </div>
                           <p className="text-2xl font-bold text-orange-600">{stats.inRestriction}</p>
                         </div>
-                        <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/20">
+                        <div 
+                          className="p-4 rounded-lg bg-destructive/10 border border-destructive/20 cursor-pointer hover:bg-destructive/20 transition-all"
+                          onClick={() => setExpandedStatus(expandedStatus?.workshop === workshop && expandedStatus?.status === 'inStop' ? null : { workshop, status: 'inStop' })}
+                        >
                           <div className="flex items-center gap-2 mb-2">
                             <Icon name="XCircle" size={18} className="text-destructive" />
                             <p className="text-sm font-medium">В стопе</p>
                           </div>
                           <p className="text-2xl font-bold text-destructive">{stats.inStop}</p>
                         </div>
-                        <div className="p-4 rounded-lg bg-muted/50 border border-border">
+                        <div 
+                          className="p-4 rounded-lg bg-muted/50 border border-border cursor-pointer hover:bg-muted transition-all"
+                          onClick={() => setExpandedStatus(expandedStatus?.workshop === workshop && expandedStatus?.status === 'pending' ? null : { workshop, status: 'pending' })}
+                        >
                           <div className="flex items-center gap-2 mb-2">
                             <Icon name="Clock" size={18} className="text-muted-foreground" />
                             <p className="text-sm font-medium">Ожидает</p>
@@ -273,6 +305,28 @@ const Index = () => {
                           <p className="text-2xl font-bold text-muted-foreground">{stats.pending}</p>
                         </div>
                       </div>
+                      {expandedStatus?.workshop === workshop && (
+                        <div className="mt-4 p-4 rounded-lg bg-muted/30 border border-border">
+                          <h4 className="font-semibold mb-3 flex items-center gap-2">
+                            <Icon name="List" size={18} />
+                            {expandedStatus.status === 'done' && 'Готовые пункты'}
+                            {expandedStatus.status === 'inRestriction' && 'Пункты в ограничении'}
+                            {expandedStatus.status === 'inStop' && 'Пункты в стопе'}
+                            {expandedStatus.status === 'pending' && 'Пункты в ожидании'}
+                          </h4>
+                          <div className="space-y-2">
+                            {stats.items[expandedStatus.status].map((item: any, idx: number) => (
+                              <div key={idx} className="p-3 rounded-lg bg-background border border-border/50">
+                                <p className="text-sm font-medium">{item.text}</p>
+                                <p className="text-xs text-muted-foreground mt-1">Чек-лист: {item.checklistName}</p>
+                                {item.timestamp && (
+                                  <p className="text-xs text-muted-foreground">Обновлено: {new Date(item.timestamp).toLocaleString('ru-RU')}</p>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
                 );
