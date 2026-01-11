@@ -35,10 +35,14 @@ export default function InventoryTab({
 }: InventoryTabProps) {
   const [inventoryProducts, setInventoryProducts] = useState<string>('');
   const [viewInventoryReport, setViewInventoryReport] = useState<any>(null);
+  const [tempQuantities, setTempQuantities] = useState<{[key: number]: string}>({});
 
   const handleStartInventory = () => {
     if (!inventoryProducts.trim()) return;
-    const products = inventoryProducts.split('\n').filter(p => p.trim()).map(p => ({ name: p.trim(), quantity: 0 }));
+    const products = inventoryProducts.split('\n').filter(p => p.trim()).map(p => ({ 
+      name: p.trim(), 
+      entries: [] // { user: string, quantity: number }[]
+    }));
     const inventory = {
       id: Date.now(),
       name: `Инвентаризация ${new Date().toLocaleDateString()}`,
@@ -62,6 +66,32 @@ export default function InventoryTab({
     const last = inventoryHistory[inventoryHistory.length - 1];
     const productNames = last.products.map((p: any) => p.name).join('\n');
     setInventoryProducts(productNames);
+  };
+
+  const handleCopyFromHistory = (inv: any) => {
+    const productNames = inv.products.map((p: any) => p.name).join('\n');
+    setInventoryProducts(productNames);
+  };
+
+  const handleSubmitEntry = (productIndex: number, quantity: number) => {
+    if (!activeInventory || quantity <= 0) return;
+    const updated = {...activeInventory};
+    const product = updated.products[productIndex];
+    
+    // Add entry for current user
+    if (!product.entries) product.entries = [];
+    product.entries.push({ user: userName, quantity });
+    
+    setActiveInventory(updated);
+    localStorage.setItem('kitchenCosmo_activeInventory', JSON.stringify(updated));
+  };
+
+  const getUserPendingProducts = () => {
+    if (!activeInventory) return [];
+    return activeInventory.products.filter((p: any) => {
+      if (!p.entries || p.entries.length === 0) return true;
+      return !p.entries.some((e: any) => e.user === userName);
+    });
   };
 
   const handleCompleteInventory = () => {
@@ -163,35 +193,49 @@ export default function InventoryTab({
                   <p className="font-semibold">{activeInventory.name}</p>
                   <p className="text-sm text-muted-foreground">Ответственный: {activeInventory.responsible}</p>
                 </div>
-                {activeInventory.products.map((item: any, idx: number) => (
-                  <div key={idx} className="flex items-center justify-between p-4 rounded-lg border border-border/50 hover:border-border transition-all">
-                    <div className="flex items-center gap-4 flex-1">
-                      <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-primary/10 to-secondary/10 flex items-center justify-center">
-                        <Icon name="Package" size={24} className="text-primary" />
+                {getUserPendingProducts().map((item: any, idx: number) => {
+                  const originalIdx = activeInventory.products.findIndex((p: any) => p.name === item.name);
+                  
+                  return (
+                    <div key={originalIdx} className="flex items-center justify-between p-4 rounded-lg border border-border/50 hover:border-border transition-all">
+                      <div className="flex items-center gap-4 flex-1">
+                        <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-primary/10 to-secondary/10 flex items-center justify-center">
+                          <Icon name="Package" size={24} className="text-primary" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="font-medium">{item.name}</p>
+                        </div>
                       </div>
-                      <div className="flex-1">
-                        <p className="font-medium">{item.name}</p>
+                      <div className="flex items-center gap-3">
+                        <Input
+                          type="number"
+                          placeholder="Граммы"
+                          className="w-32"
+                          value={tempQuantities[originalIdx] || ''}
+                          onChange={(e) => setTempQuantities({...tempQuantities, [originalIdx]: e.target.value})}
+                        />
+                        <Button 
+                          size="sm"
+                          onClick={() => {
+                            handleSubmitEntry(originalIdx, Number(tempQuantities[originalIdx]));
+                            const updated = {...tempQuantities};
+                            delete updated[originalIdx];
+                            setTempQuantities(updated);
+                          }}
+                        >
+                          <Icon name="Check" size={16} className="mr-2" />
+                          Внести
+                        </Button>
                       </div>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <Input
-                        type="number"
-                        placeholder="Граммы"
-                        className="w-32"
-                        value={item.quantity || ''}
-                        onChange={(e) => {
-                          const updated = {...activeInventory};
-                          updated.products[idx].quantity = Number(e.target.value);
-                          setActiveInventory(updated);
-                        }}
-                      />
-                      <Button size="sm">
-                        <Icon name="Check" size={16} className="mr-2" />
-                        Внести
-                      </Button>
-                    </div>
+                  );
+                })}
+                {getUserPendingProducts().length === 0 && (
+                  <div className="text-center py-12">
+                    <Icon name="CheckCircle" size={48} className="mx-auto text-green-500 mb-4" />
+                    <p className="text-muted-foreground">Вы внесли данные по всем продуктам</p>
                   </div>
-                ))}
+                )}
               </div>
             ) : !isChefOrSousChef() ? (
               <div className="text-center py-12">
@@ -252,14 +296,24 @@ export default function InventoryTab({
                             <p className="text-sm text-muted-foreground">Ответственный: {inv.responsible}</p>
                             <p className="text-sm text-muted-foreground">Продуктов: {inv.products.length} | Завершено: {inv.completedDate}</p>
                           </div>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => setViewInventoryReport(inv)}
-                          >
-                            <Icon name="FileText" size={16} className="mr-2" />
-                            Отчёт
-                          </Button>
+                          <div className="flex gap-2">
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => handleCopyFromHistory(inv)}
+                            >
+                              <Icon name="Copy" size={16} className="mr-2" />
+                              Копировать
+                            </Button>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => setViewInventoryReport(inv)}
+                            >
+                              <Icon name="FileText" size={16} className="mr-2" />
+                              Отчёт
+                            </Button>
+                          </div>
                         </div>
                       </CardContent>
                     </Card>
@@ -356,13 +410,18 @@ export default function InventoryTab({
                       </tr>
                     </thead>
                     <tbody>
-                      {viewInventoryReport.products.map((product: any, idx: number) => (
-                        <tr key={idx} className="border-b last:border-0">
-                          <td className="p-3 text-muted-foreground">{idx + 1}</td>
-                          <td className="p-3">{product.name}</td>
-                          <td className="p-3 text-right font-medium">{product.quantity || '—'}</td>
-                        </tr>
-                      ))}
+                      {viewInventoryReport.products.map((product: any, idx: number) => {
+                        const totalQuantity = product.entries && product.entries.length > 0 
+                          ? product.entries.reduce((sum: number, e: any) => sum + e.quantity, 0)
+                          : 0;
+                        return (
+                          <tr key={idx} className="border-b last:border-0">
+                            <td className="p-3 text-muted-foreground">{idx + 1}</td>
+                            <td className="p-3">{product.name}</td>
+                            <td className="p-3 text-right font-medium">{totalQuantity || '—'}</td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
