@@ -36,7 +36,14 @@ const Index = () => {
   const [newTtk, setNewTtk] = useState({ name: '', category: '', output: '', ingredients: '', tech: '' });
   const [viewTtk, setViewTtk] = useState<any>(null);
   const [inventoryProducts, setInventoryProducts] = useState<string>('');
-  const [activeInventory, setActiveInventory] = useState<any>(null);
+  const [activeInventory, setActiveInventory] = useState<any>(() => {
+    const saved = localStorage.getItem('kitchenCosmo_activeInventory');
+    return saved ? JSON.parse(saved) : null;
+  });
+  const [inventoryHistory, setInventoryHistory] = useState<any[]>(() => {
+    const saved = localStorage.getItem('kitchenCosmo_inventoryHistory');
+    return saved ? JSON.parse(saved) : [];
+  });
   const [checklistList, setChecklistList] = useState(() => {
     const saved = localStorage.getItem('kitchenCosmo_checklists');
     return saved ? JSON.parse(saved) : [
@@ -125,7 +132,20 @@ const Index = () => {
       status: 'in_progress'
     };
     setActiveInventory(inventory);
+    localStorage.setItem('kitchenCosmo_activeInventory', JSON.stringify(inventory));
     setInventoryProducts('');
+  };
+
+  const handleDeleteInventory = () => {
+    setActiveInventory(null);
+    localStorage.removeItem('kitchenCosmo_activeInventory');
+  };
+
+  const handleCopyLastInventory = () => {
+    if (inventoryHistory.length === 0) return;
+    const last = inventoryHistory[inventoryHistory.length - 1];
+    const productNames = last.products.map((p: any) => p.name).join('\n');
+    setInventoryProducts(productNames);
   };
 
   const getChecklistStats = () => {
@@ -292,7 +312,8 @@ const Index = () => {
                           </div>
                         </div>
                         <div className="space-y-2">
-                          <Label htmlFor="ttk-ingredients">Состав</Label>
+                          <Label htmlFor="ttk-ingredients">Состав продуктов</Label>
+                          <p className="text-xs text-muted-foreground mb-2">Формат: Наименование - Количество (каждый с новой строки)</p>
                           <Textarea 
                             id="ttk-ingredients" 
                             placeholder="Говядина (Рибай) - 300г&#10;Трюфельное масло - 10мл&#10;Соль морская - 5г" 
@@ -376,7 +397,7 @@ const Index = () => {
                                         <table className="w-full">
                                           <thead className="bg-muted">
                                             <tr>
-                                              <th className="text-left p-3 border-b">Продукт</th>
+                                              <th className="text-left p-3 border-b">Наименование</th>
                                               <th className="text-left p-3 border-b">Количество</th>
                                             </tr>
                                           </thead>
@@ -671,7 +692,20 @@ const Index = () => {
                               <Input id="inv-responsible" placeholder="ФИО сотрудника" value={user.name} readOnly />
                             </div>
                             <div className="space-y-2">
-                              <Label htmlFor="inv-products">Перечень продуктов (каждый с новой строки)</Label>
+                              <div className="flex items-center justify-between mb-2">
+                                <Label htmlFor="inv-products">Перечень продуктов (каждый с новой строки)</Label>
+                                {inventoryHistory.length > 0 && (
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className="gap-1 h-7"
+                                    onClick={handleCopyLastInventory}
+                                  >
+                                    <Icon name="Copy" size={14} />
+                                    Копировать предыдущий
+                                  </Button>
+                                )}
+                              </div>
                               <Textarea 
                                 id="inv-products" 
                                 placeholder="Томаты&#10;Говядина&#10;Базилик&#10;Лосось&#10;Оливковое масло"
@@ -749,8 +783,56 @@ const Index = () => {
                     <Icon name="Package" size={48} className="mx-auto text-muted-foreground mb-4" />
                     <p className="text-muted-foreground">Шеф или су-шеф должны начать инвентаризацию</p>
                   </div>
+                ) : activeInventory ? (
+                  <div className="space-y-4">
+                    <div className="p-4 rounded-lg bg-primary/5 border border-primary/20">
+                      <div className="flex items-center justify-between mb-4">
+                        <div>
+                          <p className="font-semibold text-lg">{activeInventory.name}</p>
+                          <p className="text-sm text-muted-foreground">Ответственный: {activeInventory.responsible}</p>
+                          <p className="text-sm text-muted-foreground">Продуктов: {activeInventory.products.length}</p>
+                        </div>
+                        <Button 
+                          variant="destructive" 
+                          size="sm"
+                          onClick={handleDeleteInventory}
+                        >
+                          <Icon name="Trash2" size={16} className="mr-2" />
+                          Удалить
+                        </Button>
+                      </div>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-3">
+                        {activeInventory.products.slice(0, 8).map((p: any, i: number) => (
+                          <div key={i} className="text-xs p-2 rounded bg-background/50">
+                            {p.name}
+                          </div>
+                        ))}
+                        {activeInventory.products.length > 8 && (
+                          <div className="text-xs p-2 rounded bg-background/50 text-muted-foreground">
+                            +{activeInventory.products.length - 8} еще
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 ) : (
                   <div className="space-y-4">
+                    {inventoryHistory.length > 0 ? (
+                      inventoryHistory.map((inv: any) => (
+                        <Card key={inv.id} className="border-border/50">
+                          <CardContent className="pt-6">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <p className="font-semibold">{inv.name}</p>
+                                <p className="text-sm text-muted-foreground">Ответственный: {inv.responsible}</p>
+                                <p className="text-sm text-muted-foreground">Продуктов: {inv.products.length}</p>
+                              </div>
+                              <Badge variant="outline">Завершено</Badge>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))
+                    )}
                     {[
                       { id: 1, name: 'Плановая январь 2026', date: '2026-01-15', status: 'in_progress', items: 45, checked: 28, responsible: 'Иванов П.' },
                       { id: 2, name: 'Внеплановая проверка', date: '2026-01-08', status: 'completed', items: 32, checked: 32, responsible: 'Петров С.' },
