@@ -188,9 +188,15 @@ export default function TtkTab({ ttkList, setTtkList, isChefOrSousChef }: TtkTab
                                     </thead>
                                     <tbody>
                                       {viewTtk.ingredients.split('\n').map((line: string, idx: number) => {
-                                        const parts = line.split(/(\d+[а-яА-Яa-zA-Z]+)/);
-                                        const product = parts[0]?.trim();
-                                        const quantity = parts[1]?.trim() || '-';
+                                        const dashIndex = line.indexOf(' - ');
+                                        let product = line;
+                                        let quantity = '-';
+                                        
+                                        if (dashIndex !== -1) {
+                                          product = line.substring(0, dashIndex).trim();
+                                          quantity = line.substring(dashIndex + 3).trim();
+                                        }
+                                        
                                         return (
                                           <tr key={idx} className="border-b last:border-0">
                                             <td className="p-3">{product}</td>
