@@ -39,6 +39,9 @@ const OrdersListView = ({
   handleUpdateOrderStatus,
   setShowCreateOrderDialog,
 }: OrdersListViewProps) => {
+  const pendingOrders = activeOrders.filter(o => o.status === 'pending');
+  const orderedOrders = activeOrders.filter(o => o.status === 'ordered');
+  const completedOrders = activeOrders.filter(o => o.status === 'completed');
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'pending': return <Badge variant="outline" className="bg-yellow-500/10 text-yellow-700 border-yellow-500/20">Ожидает</Badge>;
@@ -75,58 +78,185 @@ const OrdersListView = ({
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-4">
-          {activeOrders.map(order => (
-            <Card key={order.id}>
-              <CardHeader>
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-                  <div>
-                    <CardTitle className="text-lg">Заявка #{order.id}</CardTitle>
-                    <p className="text-sm text-muted-foreground">
-                      От {order.creator_name} • {new Date(order.created_at).toLocaleDateString('ru-RU')}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {getStatusBadge(order.status)}
-                    {isChefOrSousChef && order.status === 'pending' && (
-                      <Button size="sm" onClick={() => handleUpdateOrderStatus(order.id, 'ordered')}>
-                        Заказано
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {Object.entries(
-                    order.items.reduce((acc, item) => {
-                      if (!acc[item.category_name]) acc[item.category_name] = [];
-                      acc[item.category_name].push(item);
-                      return acc;
-                    }, {} as {[key: string]: OrderItem[]})
-                  ).map(([categoryName, items]) => (
-                    <div key={categoryName}>
-                      <h4 className="text-sm font-semibold text-muted-foreground mb-2 flex items-center gap-2">
-                        <Icon name="FolderOpen" size={14} />
-                        {categoryName}
-                      </h4>
-                      <div className="space-y-1">
-                        {items.map(item => (
-                          <div key={item.id} className="flex items-center justify-between p-2 rounded-lg bg-muted/50">
-                            <span className="text-sm">{item.product_name}</span>
-                            <div className="flex items-center gap-2">
-                              <Badge variant="outline" className="text-xs">{item.unit}</Badge>
-                              {getItemStatusBadge(item.status)}
+        <div className="space-y-6">
+          {pendingOrders.length > 0 && (
+            <div>
+              <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                <Icon name="Clock" size={20} />
+                Ожидают ({pendingOrders.length})
+              </h3>
+              <div className="grid gap-4">
+                {pendingOrders.map(order => (
+                  <Card key={order.id}>
+                    <CardHeader>
+                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                        <div>
+                          <CardTitle className="text-lg">Заявка #{order.id}</CardTitle>
+                          <p className="text-sm text-muted-foreground">
+                            От {order.creator_name} • {new Date(order.created_at).toLocaleDateString('ru-RU')}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {getStatusBadge(order.status)}
+                          {isChefOrSousChef && (
+                            <Button size="sm" onClick={() => handleUpdateOrderStatus(order.id, 'ordered')}>
+                              Заказано
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3">
+                        {Object.entries(
+                          order.items.reduce((acc, item) => {
+                            if (!acc[item.category_name]) acc[item.category_name] = [];
+                            acc[item.category_name].push(item);
+                            return acc;
+                          }, {} as {[key: string]: OrderItem[]})
+                        ).map(([categoryName, items]) => (
+                          <div key={categoryName}>
+                            <h4 className="text-sm font-semibold text-muted-foreground mb-2 flex items-center gap-2">
+                              <Icon name="FolderOpen" size={14} />
+                              {categoryName}
+                            </h4>
+                            <div className="space-y-1">
+                              {items.map(item => (
+                                <div key={item.id} className="flex items-center justify-between p-2 rounded-lg bg-muted/50">
+                                  <span className="text-sm">{item.product_name}</span>
+                                  <div className="flex items-center gap-2">
+                                    <Badge variant="outline" className="text-xs">{item.unit}</Badge>
+                                    {getItemStatusBadge(item.status)}
+                                  </div>
+                                </div>
+                              ))}
                             </div>
                           </div>
                         ))}
                       </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {orderedOrders.length > 0 && (
+            <div>
+              <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                <Icon name="ShoppingCart" size={20} />
+                Заказано ({orderedOrders.length})
+              </h3>
+              <div className="grid gap-4">
+                {orderedOrders.map(order => (
+                  <Card key={order.id} className="border-blue-500/20">
+                    <CardHeader>
+                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                        <div>
+                          <CardTitle className="text-lg">Заявка #{order.id}</CardTitle>
+                          <p className="text-sm text-muted-foreground">
+                            От {order.creator_name} • {new Date(order.created_at).toLocaleDateString('ru-RU')}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {getStatusBadge(order.status)}
+                          {isChefOrSousChef && (
+                            <Button size="sm" variant="outline" onClick={() => handleUpdateOrderStatus(order.id, 'completed')}>
+                              Выполнено
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3">
+                        {Object.entries(
+                          order.items.reduce((acc, item) => {
+                            if (!acc[item.category_name]) acc[item.category_name] = [];
+                            acc[item.category_name].push(item);
+                            return acc;
+                          }, {} as {[key: string]: OrderItem[]})
+                        ).map(([categoryName, items]) => (
+                          <div key={categoryName}>
+                            <h4 className="text-sm font-semibold text-muted-foreground mb-2 flex items-center gap-2">
+                              <Icon name="FolderOpen" size={14} />
+                              {categoryName}
+                            </h4>
+                            <div className="space-y-1">
+                              {items.map(item => (
+                                <div key={item.id} className="flex items-center justify-between p-2 rounded-lg bg-muted/50">
+                                  <span className="text-sm">{item.product_name}</span>
+                                  <div className="flex items-center gap-2">
+                                    <Badge variant="outline" className="text-xs">{item.unit}</Badge>
+                                    {getItemStatusBadge(item.status)}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {completedOrders.length > 0 && (
+            <div>
+              <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                <Icon name="CheckCircle2" size={20} />
+                Выполнено ({completedOrders.length})
+              </h3>
+              <div className="grid gap-4">
+                {completedOrders.map(order => (
+                  <Card key={order.id} className="border-green-500/20 opacity-75">
+                    <CardHeader>
+                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                        <div>
+                          <CardTitle className="text-lg">Заявка #{order.id}</CardTitle>
+                          <p className="text-sm text-muted-foreground">
+                            От {order.creator_name} • {new Date(order.created_at).toLocaleDateString('ru-RU')}
+                          </p>
+                        </div>
+                        {getStatusBadge(order.status)}
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3">
+                        {Object.entries(
+                          order.items.reduce((acc, item) => {
+                            if (!acc[item.category_name]) acc[item.category_name] = [];
+                            acc[item.category_name].push(item);
+                            return acc;
+                          }, {} as {[key: string]: OrderItem[]})
+                        ).map(([categoryName, items]) => (
+                          <div key={categoryName}>
+                            <h4 className="text-sm font-semibold text-muted-foreground mb-2 flex items-center gap-2">
+                              <Icon name="FolderOpen" size={14} />
+                              {categoryName}
+                            </h4>
+                            <div className="space-y-1">
+                              {items.map(item => (
+                                <div key={item.id} className="flex items-center justify-between p-2 rounded-lg bg-muted/50">
+                                  <span className="text-sm">{item.product_name}</span>
+                                  <div className="flex items-center gap-2">
+                                    <Badge variant="outline" className="text-xs">{item.unit}</Badge>
+                                    {getItemStatusBadge(item.status)}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
       

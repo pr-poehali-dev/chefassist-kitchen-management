@@ -356,7 +356,7 @@ const ProductOrdersTab = ({ restaurantId, userId, isChefOrSousChef }: ProductOrd
     return acc;
   }, {} as {[key: string]: Product[]});
 
-  const activeOrders = orders.filter(o => o.status === 'pending' || o.status === 'ordered');
+  const activeOrders = orders;
 
   return (
     <TabsContent value="products" className="space-y-4">
