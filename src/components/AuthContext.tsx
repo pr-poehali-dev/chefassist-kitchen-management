@@ -66,9 +66,30 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   useEffect(() => {
     if (user) {
+      if (user.restaurantId && user.restaurantId > 1000000000000) {
+        console.warn('🔄 Forcing logout due to invalid restaurantId');
+        logout();
+        window.location.reload();
+        return;
+      }
+      loadRestaurantInfo();
       loadEmployees();
     }
   }, [user?.restaurantId]);
+
+  const loadRestaurantInfo = async () => {
+    if (!user?.restaurantId) return;
+    
+    try {
+      const response = await fetch(`${API_URL}?action=get_restaurant&restaurantId=${user.restaurantId}`);
+      if (response.ok) {
+        const data = await response.json();
+        setRestaurant(data.restaurant);
+      }
+    } catch (error) {
+      console.error('Load restaurant error:', error);
+    }
+  };
 
   const createRestaurant = async (chefName: string, restaurantName: string) => {
     const response = await fetch(`${API_URL}?action=create_restaurant`, {
@@ -147,6 +168,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setRestaurant(null);
     setEmployees([]);
     localStorage.removeItem('kitchenCosmoUser');
+    localStorage.removeItem('kitchenCosmo_allRestaurants');
+    localStorage.removeItem('kitchenCosmo_allEmployees');
+    localStorage.removeItem('kitchenCosmo_ttk');
+    localStorage.removeItem('kitchenCosmo_checklists');
+    localStorage.removeItem('kitchenCosmo_activeInventory');
+    localStorage.removeItem('kitchenCosmo_inventoryHistory');
+    localStorage.removeItem('kitchenCosmo_lastChecklistReset');
   };
 
   const isChefOrSousChef = () => {

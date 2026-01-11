@@ -38,6 +38,25 @@ const Index = () => {
     return <LoginPage />;
   }
 
+  if (user.restaurantId && user.restaurantId > 1000000000000) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md">
+          <CardContent className="pt-6 text-center space-y-4">
+            <Icon name="AlertCircle" size={64} className="mx-auto text-orange-500 mb-4" />
+            <h2 className="text-2xl font-bold">Требуется обновление</h2>
+            <p className="text-muted-foreground">
+              Обнаружены устаревшие данные. Пожалуйста, выйдите и войдите заново.
+            </p>
+            <Button onClick={() => { logout(); window.location.reload(); }} className="w-full">
+              Выйти и обновить
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   const [activeInventory, setActiveInventory] = useState<any>(() => {
     const saved = localStorage.getItem('kitchenCosmo_activeInventory');
     return saved ? JSON.parse(saved) : null;

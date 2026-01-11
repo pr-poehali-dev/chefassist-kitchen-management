@@ -24,7 +24,11 @@ def handler(event: dict, context) -> dict:
     path = event.get('queryStringParameters', {}).get('action', '')
     
     try:
-        if method == 'POST':
+        if method == 'GET':
+            if path == 'get_restaurant':
+                return get_restaurant_info(event)
+        
+        elif method == 'POST':
             body = json.loads(event.get('body', '{}'))
             
             if path == 'create_restaurant':
@@ -158,6 +162,43 @@ def join_restaurant(body: dict) -> dict:
             'restaurant': restaurant,
             'employee': employee
         }, default=str),
+        'isBase64Encoded': False
+    }
+
+
+def get_restaurant_info(event: dict) -> dict:
+    '''Получение информации о ресторане'''
+    restaurant_id = event.get('queryStringParameters', {}).get('restaurantId')
+    
+    if not restaurant_id:
+        return {
+            'statusCode': 400,
+            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+            'body': json.dumps({'error': 'Missing restaurantId'}),
+            'isBase64Encoded': False
+        }
+    
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+    
+    cur.execute("SELECT * FROM restaurants WHERE id = %s", (restaurant_id,))
+    restaurant = cur.fetchone()
+    
+    cur.close()
+    conn.close()
+    
+    if not restaurant:
+        return {
+            'statusCode': 404,
+            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+            'body': json.dumps({'error': 'Restaurant not found'}),
+            'isBase64Encoded': False
+        }
+    
+    return {
+        'statusCode': 200,
+        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+        'body': json.dumps({'restaurant': dict(restaurant)}, default=str),
         'isBase64Encoded': False
     }
 
