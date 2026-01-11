@@ -23,6 +23,7 @@ interface ChecklistsTabProps {
 export default function ChecklistsTab({ checklistList, setChecklistList, isChefOrSousChef }: ChecklistsTabProps) {
   const [newChecklist, setNewChecklist] = useState({ name: '', workshop: '', items: '' });
   const [showChecklistStats, setShowChecklistStats] = useState(false);
+  const [editingChecklist, setEditingChecklist] = useState<any>(null);
 
   const handleSaveChecklist = () => {
     if (!newChecklist.name || !newChecklist.workshop || !newChecklist.items) return;
@@ -32,6 +33,42 @@ export default function ChecklistsTab({ checklistList, setChecklistList, isChefO
     setChecklistList(updated);
     localStorage.setItem('kitchenCosmo_checklists', JSON.stringify(updated));
     setNewChecklist({ name: '', workshop: '', items: '' });
+  };
+
+  const handleDeleteChecklist = (checklistId: number) => {
+    const updated = checklistList.filter(cl => cl.id !== checklistId);
+    setChecklistList(updated);
+    localStorage.setItem('kitchenCosmo_checklists', JSON.stringify(updated));
+  };
+
+  const handleEditChecklist = (checklist: any) => {
+    setEditingChecklist(checklist);
+    setNewChecklist({
+      name: checklist.name,
+      workshop: checklist.workshop,
+      items: checklist.items.map((item: any) => item.text).join('\n')
+    });
+  };
+
+  const handleUpdateChecklist = () => {
+    if (!newChecklist.name || !newChecklist.workshop || !newChecklist.items) return;
+    const items = newChecklist.items.split('\n').filter(i => i.trim()).map((text, idx) => {
+      const existingItem = editingChecklist.items[idx];
+      return {
+        text: text.trim(),
+        status: existingItem?.status || 'pending',
+        timestamp: existingItem?.timestamp
+      };
+    });
+    const updated = checklistList.map(cl => 
+      cl.id === editingChecklist.id 
+        ? { ...cl, name: newChecklist.name, workshop: newChecklist.workshop, items }
+        : cl
+    );
+    setChecklistList(updated);
+    localStorage.setItem('kitchenCosmo_checklists', JSON.stringify(updated));
+    setNewChecklist({ name: '', workshop: '', items: '' });
+    setEditingChecklist(null);
   };
 
   const handleToggleChecklistItem = (checklistId: number, itemIndex: number, newStatus: string) => {
@@ -122,7 +159,7 @@ export default function ChecklistsTab({ checklistList, setChecklistList, isChefO
                       </div>
                     </DialogContent>
                   </Dialog>
-                  <Dialog>
+                  <Dialog onOpenChange={(open) => { if (!open) { setNewChecklist({ name: '', workshop: '', items: '' }); setEditingChecklist(null); } }}>
                     <DialogTrigger asChild>
                       <Button size="sm" className="gap-2">
                         <Icon name="Plus" size={18} />
@@ -131,7 +168,7 @@ export default function ChecklistsTab({ checklistList, setChecklistList, isChefO
                     </DialogTrigger>
                     <DialogContent className="max-w-2xl">
                       <DialogHeader>
-                        <DialogTitle>Новый чек-лист</DialogTitle>
+                        <DialogTitle>{editingChecklist ? 'Редактировать чек-лист' : 'Новый чек-лист'}</DialogTitle>
                       </DialogHeader>
                       <div className="space-y-4 pt-4">
                         <div className="space-y-2">
@@ -162,7 +199,12 @@ export default function ChecklistsTab({ checklistList, setChecklistList, isChefO
                             onChange={(e) => setNewChecklist({...newChecklist, items: e.target.value})}
                           />
                         </div>
-                        <Button className="w-full" onClick={handleSaveChecklist}>Создать чек-лист</Button>
+                        <Button 
+                          className="w-full" 
+                          onClick={editingChecklist ? handleUpdateChecklist : handleSaveChecklist}
+                        >
+                          {editingChecklist ? 'Сохранить изменения' : 'Создать чек-лист'}
+                        </Button>
                       </div>
                     </DialogContent>
                   </Dialog>
@@ -174,7 +216,7 @@ export default function ChecklistsTab({ checklistList, setChecklistList, isChefO
         <CardContent>
           {isChefOrSousChef() ? (
             <div className="space-y-4">
-            {checklistList.map((checklist) => (
+            {checklistList.length > 0 ? checklistList.map((checklist) => (
               <Card key={checklist.id} className="border-border/50 hover:border-primary/50 transition-all">
                 <CardContent className="pt-6">
                   <div className="flex items-center justify-between mb-4">
@@ -189,6 +231,23 @@ export default function ChecklistsTab({ checklistList, setChecklistList, isChefO
                           <p className="text-xs text-primary mt-1">Заполнено: {checklist.completedDate}</p>
                         )}
                       </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleEditChecklist(checklist)}
+                      >
+                        <Icon name="Edit" size={16} className="mr-2" />
+                        Редактировать
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => handleDeleteChecklist(checklist.id)}
+                      >
+                        <Icon name="Trash2" size={16} className="text-destructive" />
+                      </Button>
                     </div>
                   </div>
                   <div className="space-y-2">
@@ -212,11 +271,16 @@ export default function ChecklistsTab({ checklistList, setChecklistList, isChefO
                   </div>
                 </CardContent>
               </Card>
-            ))}
+            )) : (
+              <div className="text-center py-12">
+                <Icon name="ClipboardList" size={48} className="mx-auto text-muted-foreground mb-4" />
+                <p className="text-muted-foreground">Чек-листы ещё не созданы</p>
+              </div>
+            )}
             </div>
           ) : (
             <div className="space-y-4">
-            {checklistList.map((checklist) => (
+            {checklistList.length > 0 ? checklistList.map((checklist) => (
               <Card key={checklist.id} className="border-border/50 hover:border-primary/50 transition-all">
                 <CardContent className="pt-6">
                   <div className="flex items-center justify-between mb-4">
@@ -271,7 +335,12 @@ export default function ChecklistsTab({ checklistList, setChecklistList, isChefO
                   </div>
                 </CardContent>
               </Card>
-            ))}
+            )) : (
+              <div className="text-center py-12">
+                <Icon name="ClipboardList" size={48} className="mx-auto text-muted-foreground mb-4" />
+                <p className="text-muted-foreground">Чек-листы ещё не созданы</p>
+              </div>
+            )}
             </div>
           )}
         </CardContent>

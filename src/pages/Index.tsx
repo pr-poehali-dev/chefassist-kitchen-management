@@ -44,18 +44,27 @@ const Index = () => {
 
   const [checklistList, setChecklistList] = useState(() => {
     const saved = localStorage.getItem('kitchenCosmo_checklists');
-    return saved ? JSON.parse(saved) : [
-      { 
-        id: 1, 
-        name: 'Открытие горячего цеха', 
-        workshop: 'Горячий цех',
-        items: [
-          { text: 'Проверить температуру плит', status: 'done' },
-          { text: 'Проверить чистоту рабочих поверхностей', status: 'done' },
-          { text: 'Проверить наличие инвентаря', status: 'in_stop' },
-        ]
-      },
-    ];
+    const lastResetDate = localStorage.getItem('kitchenCosmo_lastChecklistReset');
+    const today = new Date().toISOString().split('T')[0];
+    
+    if (saved) {
+      const checklists = JSON.parse(saved);
+      
+      if (lastResetDate !== today) {
+        const resetChecklists = checklists.map((cl: any) => ({
+          ...cl,
+          items: cl.items.map((item: any) => ({ ...item, status: 'pending', timestamp: undefined }))
+        }));
+        localStorage.setItem('kitchenCosmo_checklists', JSON.stringify(resetChecklists));
+        localStorage.setItem('kitchenCosmo_lastChecklistReset', today);
+        return resetChecklists;
+      }
+      
+      return checklists;
+    }
+    
+    localStorage.setItem('kitchenCosmo_lastChecklistReset', today);
+    return [];
   });
 
   const mockIngredients = [
