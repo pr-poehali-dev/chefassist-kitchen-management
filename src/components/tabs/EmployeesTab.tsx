@@ -5,6 +5,7 @@ import { TabsContent } from '@/components/ui/tabs';
 import Icon from '@/components/ui/icon';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/components/AuthContext';
+import { QRCodeSVG } from 'qrcode.react';
 import {
   Dialog,
   DialogContent,
@@ -82,9 +83,17 @@ export default function EmployeesTab() {
                     <DialogTitle>Пригласительная ссылка</DialogTitle>
                   </DialogHeader>
                   <div className="space-y-4 pt-4">
-                    <p className="text-sm text-muted-foreground">
-                      Отправьте эту ссылку сотрудникам для присоединения к ресторану
+                    <p className="text-sm text-muted-foreground text-center">
+                      Отсканируйте QR-код или отправьте ссылку сотрудникам
                     </p>
+                    <div className="flex justify-center p-6 bg-white rounded-lg">
+                      <QRCodeSVG 
+                        value={inviteLink} 
+                        size={220}
+                        level="H"
+                        includeMargin={true}
+                      />
+                    </div>
                     <div className="p-4 bg-muted rounded-lg break-all text-sm font-mono">
                       {inviteLink}
                     </div>

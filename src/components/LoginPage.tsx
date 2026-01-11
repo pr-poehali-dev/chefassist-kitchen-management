@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { useAuth } from '@/components/AuthContext';
 import Icon from '@/components/ui/icon';
 import { Badge } from '@/components/ui/badge';
+import { QRCodeSVG } from 'qrcode.react';
 
 const LoginPage = () => {
   const [step, setStep] = useState<'choice' | 'chef_register' | 'employee_join'>('choice');
@@ -65,6 +66,14 @@ const LoginPage = () => {
             <p className="text-muted-foreground mt-2">Отправьте эту ссылку сотрудникам</p>
           </CardHeader>
           <CardContent className="space-y-4">
+            <div className="flex justify-center p-6 bg-white rounded-lg">
+              <QRCodeSVG 
+                value={generatedInviteLink} 
+                size={200}
+                level="H"
+                includeMargin={true}
+              />
+            </div>
             <div className="p-4 bg-muted rounded-lg break-all text-sm">
               {generatedInviteLink}
             </div>
@@ -72,6 +81,9 @@ const LoginPage = () => {
               <Icon name="Copy" size={18} />
               Скопировать ссылку
             </Button>
+            <p className="text-xs text-center text-muted-foreground">
+              Отсканируйте QR-код или отправьте ссылку сотрудникам
+            </p>
             <Button onClick={() => window.location.reload()} variant="outline" className="w-full">
               Войти в систему
             </Button>
