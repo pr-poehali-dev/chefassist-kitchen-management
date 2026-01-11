@@ -122,10 +122,10 @@ export default function TtkTab({ ttkList, setTtkList, isChefOrSousChef }: TtkTab
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="ttk-ingredients">Состав продуктов</Label>
-                    <p className="text-xs text-muted-foreground mb-2">Формат: Наименование - Количество (каждый с новой строки)</p>
+                    <p className="text-xs text-muted-foreground mb-2">Формат: Наименование - Брутто - Нетто (каждый с новой строки)</p>
                     <Textarea 
                       id="ttk-ingredients" 
-                      placeholder="Говядина (Рибай) - 300г&#10;Трюфельное масло - 10мл&#10;Соль морская - 5г" 
+                      placeholder="Говядина (Рибай) - 350г - 300г&#10;Трюфельное масло - 10мл - 10мл&#10;Соль морская - 5г - 5г" 
                       rows={5}
                       value={newTtk.ingredients}
                       onChange={(e) => setNewTtk({...newTtk, ingredients: e.target.value})}
@@ -219,24 +219,32 @@ export default function TtkTab({ ttkList, setTtkList, isChefOrSousChef }: TtkTab
                                     <thead className="bg-muted">
                                       <tr>
                                         <th className="text-left p-3 border-b">Наименование</th>
-                                        <th className="text-left p-3 border-b">Количество</th>
+                                        <th className="text-left p-3 border-b">Брутто</th>
+                                        <th className="text-left p-3 border-b">Нетто</th>
                                       </tr>
                                     </thead>
                                     <tbody>
                                       {viewTtk.ingredients.split('\n').map((line: string, idx: number) => {
-                                        const dashIndex = line.indexOf(' - ');
+                                        const parts = line.split(' - ');
                                         let product = line;
-                                        let quantity = '-';
+                                        let brutto = '—';
+                                        let netto = '—';
                                         
-                                        if (dashIndex !== -1) {
-                                          product = line.substring(0, dashIndex).trim();
-                                          quantity = line.substring(dashIndex + 3).trim();
+                                        if (parts.length >= 3) {
+                                          product = parts[0].trim();
+                                          brutto = parts[1].trim();
+                                          netto = parts[2].trim();
+                                        } else if (parts.length === 2) {
+                                          product = parts[0].trim();
+                                          brutto = parts[1].trim();
+                                          netto = parts[1].trim();
                                         }
                                         
                                         return (
                                           <tr key={idx} className="border-b last:border-0">
                                             <td className="p-3">{product}</td>
-                                            <td className="p-3 font-medium">{quantity}</td>
+                                            <td className="p-3 font-medium">{brutto}</td>
+                                            <td className="p-3 font-medium">{netto}</td>
                                           </tr>
                                         );
                                       })}
