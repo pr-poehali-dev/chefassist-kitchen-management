@@ -49,12 +49,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   });
 
   const [restaurant, setRestaurant] = useState<Restaurant | null>(() => {
-    const savedRestaurant = localStorage.getItem('kitchenCosmoRestaurant');
-    return savedRestaurant ? JSON.parse(savedRestaurant) : null;
+    if (!user) return null;
+    const allRestaurants = JSON.parse(localStorage.getItem('kitchenCosmo_allRestaurants') || '[]');
+    return allRestaurants.find((r: Restaurant) => r.id === user.restaurantId) || null;
   });
 
   const [employees, setEmployees] = useState<Employee[]>(() => {
-    const savedEmployees = localStorage.getItem('kitchenCosmoEmployees');
+    const savedEmployees = localStorage.getItem('kitchenCosmo_allEmployees');
     return savedEmployees ? JSON.parse(savedEmployees) : [];
   });
 
@@ -84,24 +85,29 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       joinedAt: new Date().toISOString()
     };
 
+    const allRestaurants = JSON.parse(localStorage.getItem('kitchenCosmo_allRestaurants') || '[]');
+    allRestaurants.push(newRestaurant);
+    localStorage.setItem('kitchenCosmo_allRestaurants', JSON.stringify(allRestaurants));
+
+    const allEmployees = JSON.parse(localStorage.getItem('kitchenCosmo_allEmployees') || '[]');
+    allEmployees.push(chefEmployee);
+    localStorage.setItem('kitchenCosmo_allEmployees', JSON.stringify(allEmployees));
+
     setRestaurant(newRestaurant);
     setUser(newUser);
-    setEmployees([chefEmployee]);
+    setEmployees(allEmployees);
 
-    localStorage.setItem('kitchenCosmoRestaurant', JSON.stringify(newRestaurant));
     localStorage.setItem('kitchenCosmoUser', JSON.stringify(newUser));
-    localStorage.setItem('kitchenCosmoEmployees', JSON.stringify([chefEmployee]));
 
     const inviteLink = `${window.location.origin}?invite=${inviteCode}`;
     return { restaurant: newRestaurant, inviteLink };
   };
 
   const joinRestaurant = (name: string, role: UserRole, inviteCode: string): boolean => {
-    const savedRestaurant = localStorage.getItem('kitchenCosmoRestaurant');
-    if (!savedRestaurant) return false;
-
-    const rest: Restaurant = JSON.parse(savedRestaurant);
-    if (rest.inviteCode !== inviteCode) return false;
+    const allRestaurants = JSON.parse(localStorage.getItem('kitchenCosmo_allRestaurants') || '[]');
+    const rest = allRestaurants.find((r: Restaurant) => r.inviteCode === inviteCode);
+    
+    if (!rest) return false;
 
     const newUser: User = {
       id: Date.now().toString(),
@@ -119,15 +125,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       joinedAt: new Date().toISOString()
     };
 
-    const currentEmployees = JSON.parse(localStorage.getItem('kitchenCosmoEmployees') || '[]');
-    const updatedEmployees = [...currentEmployees, newEmployee];
+    const allEmployees = JSON.parse(localStorage.getItem('kitchenCosmo_allEmployees') || '[]');
+    allEmployees.push(newEmployee);
+    localStorage.setItem('kitchenCosmo_allEmployees', JSON.stringify(allEmployees));
 
     setUser(newUser);
     setRestaurant(rest);
-    setEmployees(updatedEmployees);
+    setEmployees(allEmployees);
 
     localStorage.setItem('kitchenCosmoUser', JSON.stringify(newUser));
-    localStorage.setItem('kitchenCosmoEmployees', JSON.stringify(updatedEmployees));
 
     return true;
   };
@@ -153,11 +159,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const updateEmployeeRole = (employeeId: string, newRole: UserRole) => {
-    const updated = employees.map(emp => 
+    const allEmployees = JSON.parse(localStorage.getItem('kitchenCosmo_allEmployees') || '[]');
+    const updated = allEmployees.map((emp: Employee) => 
       emp.id === employeeId ? { ...emp, role: newRole } : emp
     );
     setEmployees(updated);
-    localStorage.setItem('kitchenCosmoEmployees', JSON.stringify(updated));
+    localStorage.setItem('kitchenCosmo_allEmployees', JSON.stringify(updated));
 
     if (user?.id === employeeId) {
       const updatedUser = { ...user, role: newRole };
@@ -167,9 +174,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const removeEmployee = (employeeId: string) => {
-    const updated = employees.filter(emp => emp.id !== employeeId);
+    const allEmployees = JSON.parse(localStorage.getItem('kitchenCosmo_allEmployees') || '[]');
+    const updated = allEmployees.filter((emp: Employee) => emp.id !== employeeId);
     setEmployees(updated);
-    localStorage.setItem('kitchenCosmoEmployees', JSON.stringify(updated));
+    localStorage.setItem('kitchenCosmo_allEmployees', JSON.stringify(updated));
   };
 
   return (
