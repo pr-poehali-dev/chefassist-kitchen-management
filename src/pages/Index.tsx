@@ -10,6 +10,12 @@ import TtkTab from '@/components/tabs/TtkTab';
 import ChecklistsTab from '@/components/tabs/ChecklistsTab';
 import InventoryTab from '@/components/tabs/InventoryTab';
 import { OrdersTab, WriteoffTab } from '@/components/tabs/OrdersAndWriteoffTabs';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 const Index = () => {
   const { user, logout, isChefOrSousChef } = useAuth();
@@ -66,8 +72,31 @@ const Index = () => {
     { id: 3, supplier: 'Рыбный мир', status: 'delivered', items: 3, total: 8900, date: '2026-01-10' },
   ];
 
+  const [showWorkshopReport, setShowWorkshopReport] = useState(false);
+
   const lowStockItems = mockIngredients.filter(item => item.quantity < item.minStock);
   const totalInventoryValue = mockIngredients.reduce((sum, item) => sum + (item.quantity * item.price), 0);
+
+  const getWorkshopStats = () => {
+    const stats: any = {};
+    checklistList.forEach(cl => {
+      if (!stats[cl.workshop]) {
+        stats[cl.workshop] = { done: 0, inRestriction: 0, inStop: 0, pending: 0 };
+      }
+      cl.items.forEach((item: any) => {
+        if (item.status === 'done') stats[cl.workshop].done++;
+        else if (item.status === 'in_restriction') stats[cl.workshop].inRestriction++;
+        else if (item.status === 'in_stop') stats[cl.workshop].inStop++;
+        else stats[cl.workshop].pending++;
+      });
+    });
+    return stats;
+  };
+
+  const workshopStats = getWorkshopStats();
+  const totalIssues = Object.values(workshopStats).reduce((sum: number, ws: any) => 
+    sum + ws.inRestriction + ws.inStop, 0
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
@@ -122,15 +151,19 @@ const Index = () => {
               </CardContent>
             </Card>
 
-            <Card className="border-secondary/20 hover:border-secondary/40 transition-all hover:shadow-lg hover:shadow-secondary/10">
+            <Card 
+              className="border-secondary/20 hover:border-secondary/40 transition-all hover:shadow-lg hover:shadow-secondary/10 cursor-pointer"
+              onClick={() => setShowWorkshopReport(true)}
+            >
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-muted-foreground mb-1">Стоимость склада</p>
-                    <p className="text-3xl font-bold text-secondary">{totalInventoryValue.toLocaleString()} ₽</p>
+                    <p className="text-sm text-muted-foreground mb-1">Отчёты по цехам</p>
+                    <p className="text-3xl font-bold text-secondary">{totalIssues}</p>
+                    <p className="text-xs text-muted-foreground mt-1">проблем выявлено</p>
                   </div>
                   <div className="h-12 w-12 rounded-full bg-secondary/10 flex items-center justify-center">
-                    <Icon name="TrendingUp" size={24} className="text-secondary" />
+                    <Icon name="BarChart" size={24} className="text-secondary" />
                   </div>
                 </div>
               </CardContent>
@@ -187,6 +220,72 @@ const Index = () => {
           
           <WriteoffTab />
         </Tabs>
+
+        <Dialog open={showWorkshopReport} onOpenChange={setShowWorkshopReport}>
+          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Отчёт по цехам</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-6 pt-4">
+              {Object.entries(workshopStats).map(([workshop, stats]: [string, any]) => {
+                const totalItems = stats.done + stats.inRestriction + stats.inStop + stats.pending;
+                const completionRate = totalItems > 0 ? Math.round((stats.done / totalItems) * 100) : 0;
+                
+                return (
+                  <Card key={workshop} className="border-border/50">
+                    <CardContent className="pt-6">
+                      <div className="flex items-center justify-between mb-4">
+                        <div>
+                          <h3 className="font-semibold text-lg">{workshop}</h3>
+                          <p className="text-sm text-muted-foreground">Всего пунктов: {totalItems}</p>
+                        </div>
+                        <Badge variant={completionRate === 100 ? 'default' : completionRate >= 70 ? 'secondary' : 'destructive'}>
+                          {completionRate}% выполнено
+                        </Badge>
+                      </div>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/20">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Icon name="Check" size={18} className="text-green-600" />
+                            <p className="text-sm font-medium">Готово</p>
+                          </div>
+                          <p className="text-2xl font-bold text-green-600">{stats.done}</p>
+                        </div>
+                        <div className="p-4 rounded-lg bg-orange-500/10 border border-orange-500/20">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Icon name="AlertTriangle" size={18} className="text-orange-600" />
+                            <p className="text-sm font-medium">В ограничении</p>
+                          </div>
+                          <p className="text-2xl font-bold text-orange-600">{stats.inRestriction}</p>
+                        </div>
+                        <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/20">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Icon name="XCircle" size={18} className="text-destructive" />
+                            <p className="text-sm font-medium">В стопе</p>
+                          </div>
+                          <p className="text-2xl font-bold text-destructive">{stats.inStop}</p>
+                        </div>
+                        <div className="p-4 rounded-lg bg-muted/50 border border-border">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Icon name="Clock" size={18} className="text-muted-foreground" />
+                            <p className="text-sm font-medium">Ожидает</p>
+                          </div>
+                          <p className="text-2xl font-bold text-muted-foreground">{stats.pending}</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+              {Object.keys(workshopStats).length === 0 && (
+                <div className="text-center py-12">
+                  <Icon name="FileText" size={48} className="mx-auto text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground">Нет данных по чек-листам</p>
+                </div>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
