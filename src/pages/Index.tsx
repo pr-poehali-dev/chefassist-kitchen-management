@@ -15,8 +15,15 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { useAuth } from '@/components/AuthContext';
+import LoginPage from '@/components/LoginPage';
 
 const Index = () => {
+  const { user, logout, isChefOrSousChef } = useAuth();
+
+  if (!user) {
+    return <LoginPage />;
+  }
   const [activeTab, setActiveTab] = useState('ttk');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -51,16 +58,19 @@ const Index = () => {
           <div className="flex items-center justify-between mb-6">
             <div>
               <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                ChefAssist
+                KitchenCosmo
               </h1>
-              <p className="text-muted-foreground mt-1">Интеллектуальное управление профессиональной кухней</p>
+              <p className="text-muted-foreground mt-1">Система управления профессиональной кухней</p>
             </div>
-            <div className="flex gap-3">
+            <div className="flex items-center gap-3">
+              <Badge variant="secondary" className="text-sm px-3 py-1">
+                {user.role === 'chef' ? 'Шеф-повар' : user.role === 'sous_chef' ? 'Су-шеф' : 'Повар-универсал'}: {user.name}
+              </Badge>
               <Button variant="outline" size="icon" className="hover-scale">
                 <Icon name="Bell" size={20} />
               </Button>
-              <Button variant="outline" size="icon" className="hover-scale">
-                <Icon name="Settings" size={20} />
+              <Button variant="outline" size="icon" className="hover-scale" onClick={logout}>
+                <Icon name="LogOut" size={20} />
               </Button>
             </div>
           </div>
@@ -144,13 +154,14 @@ const Index = () => {
                     <Icon name="FileText" />
                     Технико-технологические карты
                   </CardTitle>
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <Button className="gap-2">
-                        <Icon name="Plus" size={18} />
-                        Создать ТТК
-                      </Button>
-                    </DialogTrigger>
+                  {isChefOrSousChef() && (
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button className="gap-2">
+                          <Icon name="Plus" size={18} />
+                          Создать ТТК
+                        </Button>
+                      </DialogTrigger>
                     <DialogContent className="max-w-2xl">
                       <DialogHeader>
                         <DialogTitle>Новая ТТК</DialogTitle>
@@ -181,7 +192,8 @@ const Index = () => {
                         <Button className="w-full">Сохранить ТТК</Button>
                       </div>
                     </DialogContent>
-                  </Dialog>
+                    </Dialog>
+                  )}
                 </div>
               </CardHeader>
               <CardContent>
@@ -201,19 +213,17 @@ const Index = () => {
                       </CardHeader>
                       <CardContent>
                         <div className="space-y-3">
-                          <div className="flex items-center justify-between p-3 rounded-lg bg-primary/5">
-                            <span className="text-sm text-muted-foreground">Себестоимость</span>
-                            <span className="text-xl font-bold text-primary">{recipe.cost}₽</span>
-                          </div>
                           <div className="flex gap-2 pt-2">
                             <Button size="sm" variant="outline" className="flex-1 gap-2">
                               <Icon name="Eye" size={16} />
                               Просмотр
                             </Button>
-                            <Button size="sm" className="flex-1 gap-2">
-                              <Icon name="Pencil" size={16} />
-                              Редактировать
-                            </Button>
+                            {isChefOrSousChef() && (
+                              <Button size="sm" className="flex-1 gap-2">
+                                <Icon name="Pencil" size={16} />
+                                Редактировать
+                              </Button>
+                            )}
                           </div>
                         </div>
                       </CardContent>
@@ -232,42 +242,62 @@ const Index = () => {
                     <Icon name="CheckSquare" />
                     Чек-листы
                   </CardTitle>
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <Button className="gap-2">
-                        <Icon name="Plus" size={18} />
-                        Создать чек-лист
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="max-w-2xl">
-                      <DialogHeader>
-                        <DialogTitle>Новый чек-лист</DialogTitle>
-                      </DialogHeader>
-                      <div className="space-y-4 pt-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="checklist-name">Название чек-листа</Label>
-                          <Input id="checklist-name" placeholder="Открытие кухни" />
+                  {isChefOrSousChef() && (
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button className="gap-2">
+                          <Icon name="Plus" size={18} />
+                          Создать чек-лист
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-2xl">
+                        <DialogHeader>
+                          <DialogTitle>Новый чек-лист</DialogTitle>
+                        </DialogHeader>
+                        <div className="space-y-4 pt-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="checklist-name">Название чек-листа</Label>
+                            <Input id="checklist-name" placeholder="Открытие кухни" />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="checklist-workshop">Цех</Label>
+                            <Input id="checklist-workshop" placeholder="Горячий / Холодный / Кондитерский" />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="checklist-items">Пункты проверки</Label>
+                            <Textarea id="checklist-items" placeholder="Проверить температуру холодильников&#10;Осмотреть срок годности продуктов&#10;Проверить чистоту рабочих поверхностей" rows={8} />
+                          </div>
+                          <Button className="w-full">Создать чек-лист</Button>
                         </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="checklist-type">Тип</Label>
-                          <Input id="checklist-type" placeholder="Ежедневный / Еженедельный" />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="checklist-items">Пункты проверки</Label>
-                          <Textarea id="checklist-items" placeholder="✓ Проверить температуру холодильников&#10;✓ Осмотреть срок годности продуктов&#10;✓ Проверить чистоту рабочих поверхностей" rows={8} />
-                        </div>
-                        <Button className="w-full">Создать чек-лист</Button>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
+                      </DialogContent>
+                    </Dialog>
+                  )}
                 </div>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   {[
-                    { id: 1, name: 'Открытие кухни', type: 'Ежедневный', items: 8, completed: 8, date: '2026-01-11' },
-                    { id: 2, name: 'Закрытие смены', type: 'Ежедневный', items: 6, completed: 4, date: '2026-01-10' },
-                    { id: 3, name: 'Санитарная обработка', type: 'Еженедельный', items: 12, completed: 12, date: '2026-01-08' },
+                    { 
+                      id: 1, 
+                      name: 'Открытие горячего цеха', 
+                      workshop: 'Горячий цех',
+                      items: [
+                        { text: 'Проверить температуру плит', status: 'done' },
+                        { text: 'Проверить чистоту рабочих поверхностей', status: 'done' },
+                        { text: 'Проверить наличие инвентаря', status: 'in_stop' },
+                        { text: 'Проверить срок годности заготовок', status: 'pending' },
+                      ]
+                    },
+                    { 
+                      id: 2, 
+                      name: 'Закрытие холодного цеха', 
+                      workshop: 'Холодный цех',
+                      items: [
+                        { text: 'Убрать все продукты в холодильники', status: 'done' },
+                        { text: 'Протереть рабочие поверхности', status: 'done' },
+                        { text: 'Проверить температуру холодильников', status: 'pending' },
+                      ]
+                    },
                   ].map((checklist) => (
                     <Card key={checklist.id} className="border-border/50 hover:border-primary/50 transition-all">
                       <CardContent className="pt-6">
@@ -278,20 +308,34 @@ const Index = () => {
                             </div>
                             <div>
                               <p className="font-semibold text-lg">{checklist.name}</p>
-                              <p className="text-sm text-muted-foreground">{checklist.type}</p>
+                              <p className="text-sm text-muted-foreground">{checklist.workshop}</p>
                             </div>
                           </div>
-                          <Badge variant={checklist.completed === checklist.items ? 'default' : 'secondary'}>
-                            {checklist.completed}/{checklist.items}
-                          </Badge>
                         </div>
-                        <Progress value={(checklist.completed / checklist.items) * 100} className="h-2 mb-4" />
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-muted-foreground">Последняя проверка: {checklist.date}</span>
-                          <Button size="sm" variant="outline" className="gap-2">
-                            <Icon name="Play" size={16} />
-                            Начать проверку
-                          </Button>
+                        <div className="space-y-2 mb-4">
+                          {checklist.items.map((item, idx) => (
+                            <div key={idx} className="flex items-center justify-between p-3 rounded-lg border border-border/50">
+                              <span className="text-sm">{item.text}</span>
+                              <div className="flex gap-2">
+                                <Button 
+                                  size="sm" 
+                                  variant={item.status === 'done' ? 'default' : 'outline'}
+                                  className="h-8 px-3"
+                                >
+                                  <Icon name="Check" size={14} className="mr-1" />
+                                  Выполнено
+                                </Button>
+                                <Button 
+                                  size="sm" 
+                                  variant={item.status === 'in_stop' ? 'destructive' : 'outline'}
+                                  className="h-8 px-3"
+                                >
+                                  <Icon name="Ban" size={14} className="mr-1" />
+                                  В стопе
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
                         </div>
                       </CardContent>
                     </Card>
@@ -386,34 +430,43 @@ const Index = () => {
                     Инвентаризация
                   </CardTitle>
                   <div className="flex gap-2">
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button size="sm" className="gap-2">
-                          <Icon name="Plus" size={18} />
-                          Начать инвентаризацию
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>Новая инвентаризация</DialogTitle>
-                        </DialogHeader>
-                        <div className="space-y-4 pt-4">
-                          <div className="space-y-2">
-                            <Label htmlFor="inv-name">Название</Label>
-                            <Input id="inv-name" placeholder="Плановая инвентаризация январь 2026" />
+                    {isChefOrSousChef() ? (
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button size="sm" className="gap-2">
+                            <Icon name="Plus" size={18} />
+                            Начать инвентаризацию
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Новая инвентаризация</DialogTitle>
+                          </DialogHeader>
+                          <div className="space-y-4 pt-4">
+                            <div className="space-y-2">
+                              <Label htmlFor="inv-name">Название</Label>
+                              <Input id="inv-name" placeholder="Плановая инвентаризация январь 2026" />
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="inv-type">Тип</Label>
+                              <Input id="inv-type" placeholder="Плановая / Внеплановая" />
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="inv-responsible">Ответственный</Label>
+                              <Input id="inv-responsible" placeholder="ФИО сотрудника" value={user.name} readOnly />
+                            </div>
+                            <Button className="w-full">Начать инвентаризацию</Button>
                           </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="inv-type">Тип</Label>
-                            <Input id="inv-type" placeholder="Плановая / Внеплановая" />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="inv-responsible">Ответственный</Label>
-                            <Input id="inv-responsible" placeholder="ФИО сотрудника" />
-                          </div>
-                          <Button className="w-full">Начать инвентаризацию</Button>
-                        </div>
-                      </DialogContent>
-                    </Dialog>
+                        </DialogContent>
+                      </Dialog>
+                    ) : (
+                      <div className="flex-1">
+                        <Input
+                          placeholder="Поиск продукта для внесения данных..."
+                          className="max-w-md"
+                        />
+                      </div>
+                    )}
                     <Button variant="outline" size="sm" className="gap-2">
                       <Icon name="History" size={18} />
                       История
@@ -422,63 +475,86 @@ const Index = () => {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {[
-                    { id: 1, name: 'Плановая январь 2026', date: '2026-01-15', status: 'in_progress', items: 45, checked: 28, responsible: 'Иванов П.' },
-                    { id: 2, name: 'Внеплановая проверка', date: '2026-01-08', status: 'completed', items: 32, checked: 32, responsible: 'Петров С.' },
-                    { id: 3, name: 'Квартальная декабрь', date: '2025-12-30', status: 'completed', items: 50, checked: 50, responsible: 'Сидоров А.' },
-                  ].map((inventory) => (
-                    <Card key={inventory.id} className="border-border/50 hover:border-primary/50 transition-all">
-                      <CardContent className="pt-6">
-                        <div className="flex items-center justify-between mb-4">
-                          <div className="flex items-center gap-4">
-                            <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-primary/10 to-secondary/10 flex items-center justify-center">
-                              <Icon name="Package" size={28} className="text-primary" />
+                {!isChefOrSousChef() ? (
+                  <div className="space-y-3">
+                    <p className="text-sm text-muted-foreground mb-4">Выберите активную инвентаризацию и внесите количество продуктов</p>
+                    {mockIngredients.map((item) => (
+                      <div key={item.id} className="flex items-center justify-between p-4 rounded-lg border border-border/50 hover:border-border transition-all">
+                        <div className="flex items-center gap-4 flex-1">
+                          <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-primary/10 to-secondary/10 flex items-center justify-center">
+                            <Icon name="Package" size={24} className="text-primary" />
+                          </div>
+                          <div className="flex-1">
+                            <p className="font-medium">{item.name}</p>
+                            <p className="text-sm text-muted-foreground">{item.category}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <Input
+                            type="number"
+                            placeholder="Граммы"
+                            className="w-32"
+                          />
+                          <Button size="sm">
+                            <Icon name="Check" size={16} className="mr-2" />
+                            Внести
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {[
+                      { id: 1, name: 'Плановая январь 2026', date: '2026-01-15', status: 'in_progress', items: 45, checked: 28, responsible: 'Иванов П.' },
+                      { id: 2, name: 'Внеплановая проверка', date: '2026-01-08', status: 'completed', items: 32, checked: 32, responsible: 'Петров С.' },
+                      { id: 3, name: 'Квартальная декабрь', date: '2025-12-30', status: 'completed', items: 50, checked: 50, responsible: 'Сидоров А.' },
+                    ].map((inventory) => (
+                      <Card key={inventory.id} className="border-border/50 hover:border-primary/50 transition-all">
+                        <CardContent className="pt-6">
+                          <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center gap-4">
+                              <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-primary/10 to-secondary/10 flex items-center justify-center">
+                                <Icon name="Package" size={28} className="text-primary" />
+                              </div>
+                              <div>
+                                <p className="font-semibold text-lg">{inventory.name}</p>
+                                <p className="text-sm text-muted-foreground">Ответственный: {inventory.responsible}</p>
+                              </div>
+                            </div>
+                            <Badge variant={inventory.status === 'completed' ? 'default' : 'secondary'}>
+                              {inventory.status === 'completed' ? 'Завершена' : 'В процессе'}
+                            </Badge>
+                          </div>
+                          <div className="grid grid-cols-3 gap-4 p-4 rounded-lg bg-muted/30 mb-4">
+                            <div>
+                              <p className="text-xs text-muted-foreground mb-1">Позиций</p>
+                              <p className="text-lg font-semibold">{inventory.items}</p>
                             </div>
                             <div>
-                              <p className="font-semibold text-lg">{inventory.name}</p>
-                              <p className="text-sm text-muted-foreground">Ответственный: {inventory.responsible}</p>
+                              <p className="text-xs text-muted-foreground mb-1">Проверено</p>
+                              <p className="text-lg font-semibold text-primary">{inventory.checked}</p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-muted-foreground mb-1">Дата</p>
+                              <p className="text-lg font-semibold">{inventory.date}</p>
                             </div>
                           </div>
-                          <Badge variant={inventory.status === 'completed' ? 'default' : 'secondary'}>
-                            {inventory.status === 'completed' ? 'Завершена' : 'В процессе'}
-                          </Badge>
-                        </div>
-                        <div className="grid grid-cols-3 gap-4 p-4 rounded-lg bg-muted/30 mb-4">
-                          <div>
-                            <p className="text-xs text-muted-foreground mb-1">Позиций</p>
-                            <p className="text-lg font-semibold">{inventory.items}</p>
-                          </div>
-                          <div>
-                            <p className="text-xs text-muted-foreground mb-1">Проверено</p>
-                            <p className="text-lg font-semibold text-primary">{inventory.checked}</p>
-                          </div>
-                          <div>
-                            <p className="text-xs text-muted-foreground mb-1">Дата</p>
-                            <p className="text-lg font-semibold">{inventory.date}</p>
-                          </div>
-                        </div>
-                        <Progress value={(inventory.checked / inventory.items) * 100} className="h-2 mb-4" />
-                        <div className="flex gap-2">
-                          {inventory.status === 'in_progress' ? (
-                            <Button size="sm" className="flex-1">
-                              <Icon name="Play" size={16} className="mr-2" />
-                              Продолжить
-                            </Button>
-                          ) : (
+                          <Progress value={(inventory.checked / inventory.items) * 100} className="h-2 mb-4" />
+                          <div className="flex gap-2">
                             <Button size="sm" variant="outline" className="flex-1">
                               <Icon name="Eye" size={16} className="mr-2" />
                               Просмотр отчёта
                             </Button>
-                          )}
-                          <Button size="sm" variant="outline">
-                            <Icon name="MoreVertical" size={16} />
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
+                            <Button size="sm" variant="outline">
+                              <Icon name="MoreVertical" size={16} />
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
