@@ -86,12 +86,38 @@ const Index = () => {
   const [expandedStatus, setExpandedStatus] = useState<{workshop: string, status: string} | null>(null);
   const [notifiedIssues, setNotifiedIssues] = useState<Set<string>>(new Set());
 
+  const playNotificationSound = (type: 'critical' | 'warning') => {
+    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    if (type === 'critical') {
+      oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+      oscillator.frequency.setValueAtTime(600, audioContext.currentTime + 0.1);
+      oscillator.frequency.setValueAtTime(800, audioContext.currentTime + 0.2);
+      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 0.3);
+    } else {
+      oscillator.frequency.setValueAtTime(600, audioContext.currentTime);
+      gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 0.2);
+    }
+  };
+
   useEffect(() => {
     checklistList.forEach(checklist => {
       checklist.items.forEach((item: any) => {
         const itemKey = `${checklist.id}-${item.id}`;
         if ((item.status === 'in_restriction' || item.status === 'in_stop') && !notifiedIssues.has(itemKey)) {
           const statusText = item.status === 'in_restriction' ? 'В ограничении' : 'В стопе';
+          playNotificationSound('critical');
           toast.error(`${statusText}: ${item.text}`, {
             description: `Цех: ${checklist.workshop} | Чек-лист: ${checklist.name}`,
             duration: 8000,
@@ -108,6 +134,7 @@ const Index = () => {
       lowStock.forEach(item => {
         const itemKey = `inventory-${item.id}`;
         if (!notifiedIssues.has(itemKey)) {
+          playNotificationSound('warning');
           toast.warning(`Низкий остаток: ${item.name}`, {
             description: `Осталось: ${item.quantity}${item.unit}, минимум: ${item.minStock}${item.unit}`,
             duration: 6000,
