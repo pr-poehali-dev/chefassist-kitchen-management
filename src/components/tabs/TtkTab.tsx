@@ -22,16 +22,22 @@ interface TtkTabProps {
 }
 
 export default function TtkTab({ ttkList, setTtkList, isChefOrSousChef }: TtkTabProps) {
-  const [newTtk, setNewTtk] = useState({ name: '', category: '', output: '', ingredients: '', tech: '' });
+  const [newTtk, setNewTtk] = useState({ name: '', category: '', output: '', ingredients: '', tech: '', weightGross: '', weightNet: '' });
   const [viewTtk, setViewTtk] = useState<any>(null);
 
   const handleSaveTtk = () => {
     if (!newTtk.name || !newTtk.category || !newTtk.ingredients) return;
-    const ttk = { ...newTtk, id: Date.now(), output: Number(newTtk.output) || 0 };
+    const ttk = { 
+      ...newTtk, 
+      id: Date.now(), 
+      output: Number(newTtk.output) || 0,
+      weightGross: Number(newTtk.weightGross) || 0,
+      weightNet: Number(newTtk.weightNet) || 0
+    };
     const updated = [...ttkList, ttk];
     setTtkList(updated);
     localStorage.setItem('kitchenCosmo_ttk', JSON.stringify(updated));
-    setNewTtk({ name: '', category: '', output: '', ingredients: '', tech: '' });
+    setNewTtk({ name: '', category: '', output: '', ingredients: '', tech: '', weightGross: '', weightNet: '' });
   };
 
   const handleDeleteTtk = (id: number) => {
@@ -89,6 +95,28 @@ export default function TtkTab({ ttkList, setTtkList, isChefOrSousChef }: TtkTab
                         placeholder="300"
                         value={newTtk.output}
                         onChange={(e) => setNewTtk({...newTtk, output: e.target.value})}
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="ttk-weight-gross">Вес брутто (г)</Label>
+                      <Input 
+                        id="ttk-weight-gross" 
+                        type="number" 
+                        placeholder="350"
+                        value={newTtk.weightGross}
+                        onChange={(e) => setNewTtk({...newTtk, weightGross: e.target.value})}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="ttk-weight-net">Вес нетто (г)</Label>
+                      <Input 
+                        id="ttk-weight-net" 
+                        type="number" 
+                        placeholder="300"
+                        value={newTtk.weightNet}
+                        onChange={(e) => setNewTtk({...newTtk, weightNet: e.target.value})}
                       />
                     </div>
                   </div>
@@ -166,7 +194,7 @@ export default function TtkTab({ ttkList, setTtkList, isChefOrSousChef }: TtkTab
                           </DialogHeader>
                           {viewTtk && (
                             <div className="space-y-4 pt-4">
-                              <div className="grid grid-cols-2 gap-4">
+                              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                 <div>
                                   <Label className="text-muted-foreground">Категория</Label>
                                   <p className="font-medium">{viewTtk.category}</p>
@@ -174,6 +202,14 @@ export default function TtkTab({ ttkList, setTtkList, isChefOrSousChef }: TtkTab
                                 <div>
                                   <Label className="text-muted-foreground">Выход</Label>
                                   <p className="font-medium">{viewTtk.output}г</p>
+                                </div>
+                                <div>
+                                  <Label className="text-muted-foreground">Вес брутто</Label>
+                                  <p className="font-medium">{viewTtk.weightGross || '—'}г</p>
+                                </div>
+                                <div>
+                                  <Label className="text-muted-foreground">Вес нетто</Label>
+                                  <p className="font-medium">{viewTtk.weightNet || '—'}г</p>
                                 </div>
                               </div>
                               <div>
