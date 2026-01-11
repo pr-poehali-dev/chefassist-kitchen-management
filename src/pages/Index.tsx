@@ -126,29 +126,29 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-      <div className="container mx-auto px-4 py-6 max-w-7xl">
-        <header className="mb-8 animate-fade-in">
-          <div className="flex items-center justify-between mb-6">
+      <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 max-w-7xl">
+        <header className="mb-6 sm:mb-8 animate-fade-in">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
             <div>
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
                 KitchenCosmo
               </h1>
-              <p className="text-muted-foreground mt-1">Система управления профессиональной кухней</p>
+              <p className="text-sm sm:text-base text-muted-foreground mt-1">Система управления профессиональной кухней</p>
             </div>
-            <div className="flex items-center gap-3">
-              <Badge variant="secondary" className="text-sm px-3 py-1">
+            <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
+              <Badge variant="secondary" className="text-xs sm:text-sm px-2 sm:px-3 py-1 truncate max-w-[180px] sm:max-w-none">
                 {user.role === 'chef' ? 'Шеф-повар' : user.role === 'sous_chef' ? 'Су-шеф' : 'Повар-универсал'}: {user.name}
               </Badge>
-              <Button variant="outline" size="icon" className="hover-scale">
-                <Icon name="Bell" size={20} />
+              <Button variant="outline" size="icon" className="hover-scale flex-shrink-0">
+                <Icon name="Bell" size={18} />
               </Button>
-              <Button variant="outline" size="icon" className="hover-scale" onClick={logout}>
-                <Icon name="LogOut" size={20} />
+              <Button variant="outline" size="icon" className="hover-scale flex-shrink-0" onClick={logout}>
+                <Icon name="LogOut" size={18} />
               </Button>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
             <Card className="border-primary/20 hover:border-primary/40 transition-all hover:shadow-lg hover:shadow-primary/10">
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between">
@@ -177,6 +177,7 @@ const Index = () => {
               </CardContent>
             </Card>
 
+            {isChefOrSousChef() && (
             <Card 
               className="border-secondary/20 hover:border-secondary/40 transition-all hover:shadow-lg hover:shadow-secondary/10 cursor-pointer"
               onClick={() => setShowWorkshopReport(true)}
@@ -194,37 +195,39 @@ const Index = () => {
                 </div>
               </CardContent>
             </Card>
+            )}
           </div>
         </header>
 
-        <Tabs defaultValue="ttk" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6 lg:w-auto lg:inline-grid bg-card/50 backdrop-blur-sm">
-            <TabsTrigger value="ttk" className="gap-2">
-              <Icon name="FileText" size={18} />
-              <span className="hidden sm:inline">ТТК</span>
+        <Tabs defaultValue="ttk" className="space-y-4 sm:space-y-6">
+          <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 lg:w-auto lg:inline-grid bg-card/50 backdrop-blur-sm gap-1">
+            <TabsTrigger value="ttk" className="gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-4">
+              <Icon name="FileText" size={16} />
+              <span>ТТК</span>
             </TabsTrigger>
-            <TabsTrigger value="inventory" className="gap-2">
-              <Icon name="ClipboardList" size={18} />
-              <span className="hidden sm:inline">Инвентаризация</span>
-            </TabsTrigger>
-            <TabsTrigger value="checklists" className="gap-2">
-              <Icon name="CheckSquare" size={18} />
-              <span className="hidden sm:inline">Чек-листы</span>
-            </TabsTrigger>
-            <TabsTrigger value="orders" className="gap-2">
-              <Icon name="ShoppingCart" size={18} />
-              <span className="hidden sm:inline">Заявки</span>
-            </TabsTrigger>
-            <TabsTrigger value="writeoff" className="gap-2">
-              <Icon name="MinusCircle" size={18} />
-              <span className="hidden sm:inline">Списание</span>
+            <TabsTrigger value="checklists" className="gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-4">
+              <Icon name="CheckSquare" size={16} />
+              <span>Чек-листы</span>
             </TabsTrigger>
             {isChefOrSousChef() && (
-              <TabsTrigger value="employees" className="gap-2">
-                <Icon name="Users" size={18} />
-                <span className="hidden sm:inline">Сотрудники</span>
+              <TabsTrigger value="employees" className="gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-4">
+                <Icon name="Users" size={16} />
+                <span>Сотрудники</span>
               </TabsTrigger>
             )}
+            <TabsTrigger value="inventory" className="gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-4 col-span-3 sm:col-span-1">
+              <Icon name="ClipboardList" size={16} />
+              <span className="hidden sm:inline">Инвентаризация</span>
+              <span className="sm:hidden">Инвент.</span>
+            </TabsTrigger>
+            <TabsTrigger value="orders" className="gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-4">
+              <Icon name="ShoppingCart" size={16} />
+              <span>Заявки</span>
+            </TabsTrigger>
+            <TabsTrigger value="writeoff" className="gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-4">
+              <Icon name="MinusCircle" size={16} />
+              <span>Списание</span>
+            </TabsTrigger>
           </TabsList>
 
           <TtkTab 
@@ -268,73 +271,73 @@ const Index = () => {
             if (!open) setExpandedStatus(null);
           }}
         >
-          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogContent className="max-w-[95vw] sm:max-w-4xl max-h-[85vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Отчёт по цехам</DialogTitle>
+              <DialogTitle className="text-lg sm:text-xl">Отчёт по цехам</DialogTitle>
             </DialogHeader>
-            <div className="space-y-6 pt-4">
+            <div className="space-y-4 sm:space-y-6 pt-4">
               {Object.entries(workshopStats).map(([workshop, stats]: [string, any]) => {
                 const totalItems = stats.done + stats.inRestriction + stats.inStop + stats.pending;
                 const completionRate = totalItems > 0 ? Math.round((stats.done / totalItems) * 100) : 0;
                 
                 return (
                   <Card key={workshop} className="border-border/50">
-                    <CardContent className="pt-6">
-                      <div className="flex items-center justify-between mb-4">
+                    <CardContent className="pt-4 sm:pt-6 px-3 sm:px-6">
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0 mb-3 sm:mb-4">
                         <div>
-                          <h3 className="font-semibold text-lg">{workshop}</h3>
-                          <p className="text-sm text-muted-foreground">Всего пунктов: {totalItems}</p>
+                          <h3 className="font-semibold text-base sm:text-lg">{workshop}</h3>
+                          <p className="text-xs sm:text-sm text-muted-foreground">Всего пунктов: {totalItems}</p>
                         </div>
-                        <Badge variant={completionRate === 100 ? 'default' : completionRate >= 70 ? 'secondary' : 'destructive'}>
+                        <Badge variant={completionRate === 100 ? 'default' : completionRate >= 70 ? 'secondary' : 'destructive'} className="text-xs sm:text-sm">
                           {completionRate}% выполнено
                         </Badge>
                       </div>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div className="grid grid-cols-2 gap-2 sm:gap-4">
                         <div 
-                          className="p-4 rounded-lg bg-green-500/10 border border-green-500/20 cursor-pointer hover:bg-green-500/20 transition-all"
+                          className="p-3 sm:p-4 rounded-lg bg-green-500/10 border border-green-500/20 cursor-pointer hover:bg-green-500/20 transition-all"
                           onClick={() => setExpandedStatus(expandedStatus?.workshop === workshop && expandedStatus?.status === 'done' ? null : { workshop, status: 'done' })}
                         >
-                          <div className="flex items-center gap-2 mb-2">
-                            <Icon name="Check" size={18} className="text-green-600" />
-                            <p className="text-sm font-medium">Готово</p>
+                          <div className="flex items-center gap-1 sm:gap-2 mb-1 sm:mb-2">
+                            <Icon name="Check" size={16} className="text-green-600" />
+                            <p className="text-xs sm:text-sm font-medium">Готово</p>
                           </div>
-                          <p className="text-2xl font-bold text-green-600">{stats.done}</p>
+                          <p className="text-xl sm:text-2xl font-bold text-green-600">{stats.done}</p>
                         </div>
                         <div 
-                          className="p-4 rounded-lg bg-orange-500/10 border border-orange-500/20 cursor-pointer hover:bg-orange-500/20 transition-all"
+                          className="p-3 sm:p-4 rounded-lg bg-orange-500/10 border border-orange-500/20 cursor-pointer hover:bg-orange-500/20 transition-all"
                           onClick={() => setExpandedStatus(expandedStatus?.workshop === workshop && expandedStatus?.status === 'inRestriction' ? null : { workshop, status: 'inRestriction' })}
                         >
-                          <div className="flex items-center gap-2 mb-2">
-                            <Icon name="AlertTriangle" size={18} className="text-orange-600" />
-                            <p className="text-sm font-medium">В ограничении</p>
+                          <div className="flex items-center gap-1 sm:gap-2 mb-1 sm:mb-2">
+                            <Icon name="AlertTriangle" size={16} className="text-orange-600" />
+                            <p className="text-xs sm:text-sm font-medium">В ограничении</p>
                           </div>
-                          <p className="text-2xl font-bold text-orange-600">{stats.inRestriction}</p>
+                          <p className="text-xl sm:text-2xl font-bold text-orange-600">{stats.inRestriction}</p>
                         </div>
                         <div 
-                          className="p-4 rounded-lg bg-destructive/10 border border-destructive/20 cursor-pointer hover:bg-destructive/20 transition-all"
+                          className="p-3 sm:p-4 rounded-lg bg-destructive/10 border border-destructive/20 cursor-pointer hover:bg-destructive/20 transition-all"
                           onClick={() => setExpandedStatus(expandedStatus?.workshop === workshop && expandedStatus?.status === 'inStop' ? null : { workshop, status: 'inStop' })}
                         >
-                          <div className="flex items-center gap-2 mb-2">
-                            <Icon name="XCircle" size={18} className="text-destructive" />
-                            <p className="text-sm font-medium">В стопе</p>
+                          <div className="flex items-center gap-1 sm:gap-2 mb-1 sm:mb-2">
+                            <Icon name="XCircle" size={16} className="text-destructive" />
+                            <p className="text-xs sm:text-sm font-medium">В стопе</p>
                           </div>
-                          <p className="text-2xl font-bold text-destructive">{stats.inStop}</p>
+                          <p className="text-xl sm:text-2xl font-bold text-destructive">{stats.inStop}</p>
                         </div>
                         <div 
-                          className="p-4 rounded-lg bg-muted/50 border border-border cursor-pointer hover:bg-muted transition-all"
+                          className="p-3 sm:p-4 rounded-lg bg-muted/50 border border-border cursor-pointer hover:bg-muted transition-all"
                           onClick={() => setExpandedStatus(expandedStatus?.workshop === workshop && expandedStatus?.status === 'pending' ? null : { workshop, status: 'pending' })}
                         >
-                          <div className="flex items-center gap-2 mb-2">
-                            <Icon name="Clock" size={18} className="text-muted-foreground" />
-                            <p className="text-sm font-medium">Ожидает</p>
+                          <div className="flex items-center gap-1 sm:gap-2 mb-1 sm:mb-2">
+                            <Icon name="Clock" size={16} className="text-muted-foreground" />
+                            <p className="text-xs sm:text-sm font-medium">Ожидает</p>
                           </div>
-                          <p className="text-2xl font-bold text-muted-foreground">{stats.pending}</p>
+                          <p className="text-xl sm:text-2xl font-bold text-muted-foreground">{stats.pending}</p>
                         </div>
                       </div>
                       {expandedStatus?.workshop === workshop && stats.items && stats.items[expandedStatus.status] && (
-                        <div className="mt-4 p-4 rounded-lg bg-muted/30 border border-border">
-                          <h4 className="font-semibold mb-3 flex items-center gap-2">
-                            <Icon name="List" size={18} />
+                        <div className="mt-3 sm:mt-4 p-3 sm:p-4 rounded-lg bg-muted/30 border border-border">
+                          <h4 className="text-sm sm:text-base font-semibold mb-2 sm:mb-3 flex items-center gap-2">
+                            <Icon name="List" size={16} />
                             {expandedStatus.status === 'done' && 'Готовые пункты'}
                             {expandedStatus.status === 'inRestriction' && 'Пункты в ограничении'}
                             {expandedStatus.status === 'inStop' && 'Пункты в стопе'}
@@ -342,11 +345,11 @@ const Index = () => {
                           </h4>
                           <div className="space-y-2">
                             {stats.items[expandedStatus.status].map((item: any, idx: number) => (
-                              <div key={idx} className="p-3 rounded-lg bg-background border border-border/50">
-                                <p className="text-sm font-medium">{item.text}</p>
-                                <p className="text-xs text-muted-foreground mt-1">Чек-лист: {item.checklistName}</p>
+                              <div key={idx} className="p-2 sm:p-3 rounded-lg bg-background border border-border/50">
+                                <p className="text-xs sm:text-sm font-medium">{item.text}</p>
+                                <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">Чек-лист: {item.checklistName}</p>
                                 {item.timestamp && (
-                                  <p className="text-xs text-muted-foreground">Обновлено: {new Date(item.timestamp).toLocaleString('ru-RU')}</p>
+                                  <p className="text-[10px] sm:text-xs text-muted-foreground">Обновлено: {new Date(item.timestamp).toLocaleString('ru-RU')}</p>
                                 )}
                               </div>
                             ))}
