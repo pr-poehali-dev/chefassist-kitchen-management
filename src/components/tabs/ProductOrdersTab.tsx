@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import ProductMatrixView from './product-orders/ProductMatrixView';
 import OrdersListView from './product-orders/OrdersListView';
 import CreateOrderDialog from './product-orders/CreateOrderDialog';
+import CookProductsList from './product-orders/CookProductsList';
 
 const PRODUCTS_API_URL = 'https://functions.poehali.dev/2ff9cc4a-f745-42e6-bca2-f02bd90f39fd';
 
@@ -296,12 +297,6 @@ const ProductOrdersTab = ({ restaurantId, userId, isChefOrSousChef }: ProductOrd
           </p>
         </div>
         <div className="flex gap-2 w-full sm:w-auto">
-          {!isChefOrSousChef() && (
-            <Button onClick={() => setShowCreateOrderDialog(true)} className="flex-1 sm:flex-none">
-              <Icon name="Plus" size={18} className="mr-2" />
-              Создать заявку
-            </Button>
-          )}
           {isChefOrSousChef() && activeSubTab === 'matrix' && (
             <>
               <Button onClick={() => setShowCategoryDialog(true)} variant="outline" size="sm">
@@ -317,31 +312,29 @@ const ProductOrdersTab = ({ restaurantId, userId, isChefOrSousChef }: ProductOrd
         </div>
       </div>
 
-      <Tabs value={activeSubTab} onValueChange={(v) => setActiveSubTab(v as 'orders' | 'matrix')} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-2 sm:w-auto sm:inline-grid">
-          <TabsTrigger value="orders" className="gap-2">
-            <Icon name="ShoppingCart" size={16} />
-            <span>Заявки</span>
-            {activeOrders.length > 0 && <Badge variant="secondary" className="ml-1">{activeOrders.length}</Badge>}
-          </TabsTrigger>
-          {isChefOrSousChef() && (
+      {isChefOrSousChef() ? (
+        <Tabs value={activeSubTab} onValueChange={(v) => setActiveSubTab(v as 'orders' | 'matrix')} className="space-y-4">
+          <TabsList className="grid w-full grid-cols-2 sm:w-auto sm:inline-grid">
+            <TabsTrigger value="orders" className="gap-2">
+              <Icon name="ShoppingCart" size={16} />
+              <span>Заявки</span>
+              {activeOrders.length > 0 && <Badge variant="secondary" className="ml-1">{activeOrders.length}</Badge>}
+            </TabsTrigger>
             <TabsTrigger value="matrix" className="gap-2">
               <Icon name="Package" size={16} />
               <span>Матрица</span>
               <Badge variant="secondary" className="ml-1">{products.length}</Badge>
             </TabsTrigger>
-          )}
-        </TabsList>
+          </TabsList>
 
-        <OrdersListView
-          activeOrders={activeOrders}
-          loading={loading}
-          isChefOrSousChef={isChefOrSousChef()}
-          handleUpdateOrderStatus={handleUpdateOrderStatus}
-          setShowCreateOrderDialog={setShowCreateOrderDialog}
-        />
+          <OrdersListView
+            activeOrders={activeOrders}
+            loading={loading}
+            isChefOrSousChef={true}
+            handleUpdateOrderStatus={handleUpdateOrderStatus}
+            setShowCreateOrderDialog={setShowCreateOrderDialog}
+          />
 
-        {isChefOrSousChef() && (
           <ProductMatrixView
             categories={categories}
             products={products}
@@ -356,17 +349,18 @@ const ProductOrdersTab = ({ restaurantId, userId, isChefOrSousChef }: ProductOrd
             handleCreateCategory={handleCreateCategory}
             handleCreateProduct={handleCreateProduct}
           />
-        )}
-      </Tabs>
+        </Tabs>
+      ) : (
+        <CookProductsList
+          categories={categories}
+          products={products}
+          selectedProducts={selectedProducts}
+          onToggleProduct={handleToggleProduct}
+          onCreateOrder={handleCreateOrder}
+        />
+      )}
 
-      <CreateOrderDialog
-        showCreateOrderDialog={showCreateOrderDialog}
-        setShowCreateOrderDialog={setShowCreateOrderDialog}
-        productsByCategoryForOrder={productsByCategoryForOrder}
-        selectedProducts={selectedProducts}
-        handleToggleProduct={handleToggleProduct}
-        handleCreateOrder={handleCreateOrder}
-      />
+
     </TabsContent>
   );
 };
