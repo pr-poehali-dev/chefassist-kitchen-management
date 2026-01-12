@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { QRCodeSVG } from 'qrcode.react';
 
 const LoginPage = () => {
-  const [step, setStep] = useState<'choice' | 'chef_register' | 'employee_join'>('choice');
+  const [step, setStep] = useState<'choice' | 'chef_register' | 'employee_join' | 'employee_login'>('choice');
   const [name, setName] = useState('');
   const [restaurantName, setRestaurantName] = useState('');
   const [selectedRole, setSelectedRole] = useState<'chef' | 'sous_chef' | 'cook' | null>(null);
@@ -18,7 +18,7 @@ const LoginPage = () => {
   const [generatedInviteLink, setGeneratedInviteLink] = useState('');
   const [error, setError] = useState('');
   
-  const { createRestaurant, joinRestaurant, logout } = useAuth();
+  const { createRestaurant, joinRestaurant, loginExisting, logout } = useAuth();
 
   const handleClearOldData = () => {
     logout();
@@ -63,6 +63,22 @@ const LoginPage = () => {
       }
     } catch (error) {
       setError('Ошибка при присоединении');
+    }
+  };
+
+  const handleLoginExisting = async () => {
+    if (!name || !inviteCode) {
+      setError('Заполните все поля');
+      return;
+    }
+
+    try {
+      const success = await loginExisting(name, inviteCode);
+      if (!success) {
+        setError('Сотрудник не найден в этом ресторане');
+      }
+    } catch (error) {
+      setError('Ошибка при входе');
     }
   };
 
@@ -147,6 +163,17 @@ const LoginPage = () => {
               </div>
             </Button>
             <Button 
+              onClick={() => setStep('employee_login')} 
+              variant="outline"
+              className="w-full h-auto py-4 text-base flex items-center gap-4 touch-target"
+            >
+              <Icon name="LogIn" size={28} className="flex-shrink-0" />
+              <div className="text-left flex-1">
+                <p className="font-bold">Войти</p>
+                <p className="text-xs text-muted-foreground font-normal">Я уже зарегистрирован</p>
+              </div>
+            </Button>
+            <Button 
               onClick={handleClearOldData} 
               variant="ghost"
               className="w-full text-xs text-muted-foreground h-10 mt-2 touch-target"
@@ -205,6 +232,60 @@ const LoginPage = () => {
             <Button onClick={handleCreateRestaurant} className="w-full h-12 text-base touch-target">
               Создать ресторан
             </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (step === 'employee_login') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 flex items-center justify-center p-4 safe-top safe-bottom">
+        <Card className="w-full max-w-md animate-scale-in">
+          <CardHeader>
+            <Button 
+              variant="ghost" 
+              onClick={() => setStep('choice')}
+              className="w-fit mb-2 h-10 touch-target"
+            >
+              <Icon name="ArrowLeft" size={20} className="mr-2" />
+              Назад
+            </Button>
+            <CardTitle className="text-xl sm:text-2xl">Вход в систему</CardTitle>
+            <p className="text-sm text-muted-foreground">Введите данные для входа</p>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {error && (
+              <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg text-sm text-destructive">
+                {error}
+              </div>
+            )}
+            <div className="space-y-2">
+              <Label htmlFor="login-name" className="text-base">Ваше ФИО</Label>
+              <Input
+                id="login-name"
+                placeholder="Иван Иванов"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="h-12 text-base"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="login-invite" className="text-base">Код ресторана</Label>
+              <Input
+                id="login-invite"
+                placeholder="Введите код"
+                value={inviteCode}
+                onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
+                className="h-12 text-base"
+              />
+            </div>
+            <Button onClick={handleLoginExisting} className="w-full h-12 text-base touch-target">
+              Войти
+            </Button>
+            <p className="text-xs text-center text-muted-foreground">
+              Не знаете код ресторана? Спросите у шефа
+            </p>
           </CardContent>
         </Card>
       </div>

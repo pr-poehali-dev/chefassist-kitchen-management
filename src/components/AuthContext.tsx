@@ -37,6 +37,7 @@ interface AuthContextType {
   isChefOrSousChef: () => boolean;
   createRestaurant: (chefName: string, restaurantName: string) => Promise<{ restaurant: Restaurant; inviteLink: string }>;
   joinRestaurant: (name: string, role: UserRole, inviteCode: string) => Promise<boolean>;
+  loginExisting: (name: string, inviteCode: string) => Promise<boolean>;
   getEmployees: () => Promise<Employee[]>;
   updateEmployeeRole: (employeeId: number, newRole: UserRole) => Promise<void>;
   removeEmployee: (employeeId: number) => Promise<void>;
@@ -170,7 +171,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const newUser: User = {
         id: emp.id,
         name,
-        role,
+        role: emp.role,
         restaurantId: rest.id,
         restaurantName: rest.name
       };
@@ -182,6 +183,41 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       return true;
     } catch (error) {
       console.error('Join restaurant error:', error);
+      return false;
+    }
+  };
+
+  const loginExisting = async (name: string, inviteCode: string): Promise<boolean> => {
+    try {
+      const response = await fetch(`${API_URL}?action=login_existing`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, inviteCode })
+      });
+
+      if (!response.ok) {
+        return false;
+      }
+
+      const data = await response.json();
+      const rest = data.restaurant;
+      const emp = data.employee;
+
+      const newUser: User = {
+        id: emp.id,
+        name,
+        role: emp.role,
+        restaurantId: rest.id,
+        restaurantName: rest.name
+      };
+
+      setUser(newUser);
+      setRestaurant(rest);
+      localStorage.setItem('kitchenCosmoUser', JSON.stringify(newUser));
+
+      return true;
+    } catch (error) {
+      console.error('Login existing error:', error);
       return false;
     }
   };
@@ -284,6 +320,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       isChefOrSousChef,
       createRestaurant,
       joinRestaurant,
+      loginExisting,
       getEmployees,
       updateEmployeeRole,
       removeEmployee

@@ -35,6 +35,8 @@ def handler(event: dict, context) -> dict:
                 return create_restaurant(body)
             elif path == 'join_restaurant':
                 return join_restaurant(body)
+            elif path == 'login_existing':
+                return login_existing_employee(body)
             elif path == 'get_employees':
                 return get_employees(body)
             elif path == 'update_employee_role':
@@ -148,6 +150,27 @@ def join_restaurant(body: dict) -> dict:
     restaurant = dict(restaurant)
     
     cur.execute(
+        "SELECT * FROM employees WHERE restaurant_id = %s AND name = %s",
+        (restaurant['id'], name)
+    )
+    existing_employee = cur.fetchone()
+    
+    if existing_employee:
+        employee = dict(existing_employee)
+        cur.close()
+        conn.close()
+        return {
+            'statusCode': 200,
+            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+            'body': json.dumps({
+                'restaurant': restaurant,
+                'employee': employee,
+                'isExisting': True
+            }, default=str),
+            'isBase64Encoded': False
+        }
+    
+    cur.execute(
         "INSERT INTO employees (name, role, restaurant_id) VALUES (%s, %s, %s) RETURNING id, name, role, restaurant_id, joined_at",
         (name, role, restaurant['id'])
     )
@@ -162,7 +185,67 @@ def join_restaurant(body: dict) -> dict:
         'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
         'body': json.dumps({
             'restaurant': restaurant,
-            'employee': employee
+            'employee': employee,
+            'isExisting': False
+        }, default=str),
+        'isBase64Encoded': False
+    }
+
+
+def login_existing_employee(body: dict) -> dict:
+    '''Вход для существующего сотрудника'''
+    name = body.get('name')
+    invite_code = body.get('inviteCode')
+    
+    if not name or not invite_code:
+        return {
+            'statusCode': 400,
+            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+            'body': json.dumps({'error': 'Missing required fields'}),
+            'isBase64Encoded': False
+        }
+    
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+    
+    cur.execute("SELECT * FROM restaurants WHERE invite_code = %s", (invite_code,))
+    restaurant = cur.fetchone()
+    
+    if not restaurant:
+        cur.close()
+        conn.close()
+        return {
+            'statusCode': 404,
+            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+            'body': json.dumps({'error': 'Invalid invite code'}),
+            'isBase64Encoded': False
+        }
+    
+    restaurant = dict(restaurant)
+    
+    cur.execute(
+        "SELECT * FROM employees WHERE restaurant_id = %s AND name = %s",
+        (restaurant['id'], name)
+    )
+    employee = cur.fetchone()
+    
+    cur.close()
+    conn.close()
+    
+    if not employee:
+        return {
+            'statusCode': 404,
+            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+            'body': json.dumps({'error': 'Employee not found in this restaurant'}),
+            'isBase64Encoded': False
+        }
+    
+    return {
+        'statusCode': 200,
+        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+        'body': json.dumps({
+            'restaurant': restaurant,
+            'employee': dict(employee)
         }, default=str),
         'isBase64Encoded': False
     }
