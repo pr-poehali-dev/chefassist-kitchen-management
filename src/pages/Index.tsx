@@ -248,7 +248,11 @@ const Index = () => {
               userName={user?.name || ''}
             />
 
-            <ProductOrdersTab restaurantId={user?.restaurantId} />
+            <ProductOrdersTab 
+              restaurantId={user?.restaurantId} 
+              userId={user?.id}
+              isChefOrSousChef={isChefOrSousChef}
+            />
 
             <WriteoffTab restaurantId={user?.restaurantId} />
 
