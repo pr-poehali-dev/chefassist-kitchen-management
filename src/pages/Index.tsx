@@ -87,45 +87,45 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
       <div className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
-        <div className="max-w-7xl mx-auto px-4 py-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
+        <div className="max-w-7xl mx-auto px-3 py-2.5">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 min-w-0 flex-1">
               <img 
                 src="https://cdn.poehali.dev/projects/ca4481ee-9d03-47bf-afcd-998c0128f9ce/files/2f8a5a42-7dbe-437b-9787-b8cd165e8f90.jpg" 
                 alt="KitchenCosmo Logo" 
-                className="h-10 w-10 rounded-lg object-cover"
+                className="h-9 w-9 rounded-lg object-cover flex-shrink-0"
               />
-              <div>
-                <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+              <div className="min-w-0 flex-1">
+                <h1 className="text-base font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent truncate">
                   KitchenCosmo
                 </h1>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-muted-foreground truncate">
                   {user?.role === 'chef' ? 'Шеф' : user?.role === 'sous_chef' ? 'Су-шеф' : 'Повар'} • {user?.name}
                 </p>
               </div>
             </div>
-            <Button variant="ghost" size="sm" onClick={() => { logout(); window.location.reload(); }}>
+            <Button variant="ghost" size="sm" className="flex-shrink-0" onClick={() => { logout(); window.location.reload(); }}>
               <Icon name="LogOut" size={18} />
             </Button>
           </div>
         </div>
       </div>
-      <div className="max-w-7xl mx-auto p-4 pb-24">
+      <div className="max-w-7xl mx-auto px-3 py-4 pb-24">
 
-        <div className="grid grid-cols-2 gap-3 mb-6">
+        <div className="grid grid-cols-2 gap-2.5 mb-4">
           <Card 
             className="cursor-pointer active:scale-95 transition-all duration-150 border-2" 
             onClick={() => setShowWorkshopReport(true)}
           >
-            <CardContent className="p-4">
-              <div className="flex flex-col gap-3">
+            <CardContent className="p-3">
+              <div className="flex flex-col gap-2">
                 <div className="flex items-center justify-between">
-                  <div className="w-10 h-10 bg-blue-500/10 rounded-xl flex items-center justify-center">
-                    <Icon name="CheckSquare" size={20} className="text-blue-500" />
+                  <div className="w-9 h-9 bg-blue-500/10 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <Icon name="CheckSquare" size={18} className="text-blue-500" />
                   </div>
-                  <p className="text-3xl font-bold">{Object.keys(workshopStats).length}</p>
+                  <p className="text-2xl font-bold">{Object.keys(workshopStats).length}</p>
                 </div>
-                <p className="text-sm font-medium text-muted-foreground">Чек-листы</p>
+                <p className="text-xs font-medium text-muted-foreground truncate">Чек-листы</p>
               </div>
             </CardContent>
           </Card>
@@ -134,18 +134,18 @@ const Index = () => {
             className="cursor-pointer active:scale-95 transition-all duration-150 border-2" 
             onClick={() => setShowOrdersDialog(true)}
           >
-            <CardContent className="p-4">
-              <div className="flex flex-col gap-3">
+            <CardContent className="p-3">
+              <div className="flex flex-col gap-2">
                 <div className="flex items-center justify-between">
-                  <div className="w-10 h-10 bg-green-500/10 rounded-xl flex items-center justify-center">
-                    <Icon name="Package" size={20} className="text-green-500" />
+                  <div className="w-9 h-9 bg-green-500/10 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <Icon name="Package" size={18} className="text-green-500" />
                   </div>
-                  <p className="text-3xl font-bold">{orderStats.total}</p>
+                  <p className="text-2xl font-bold">{orderStats.total}</p>
                 </div>
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-medium text-muted-foreground">Заявки</p>
+                <div className="flex items-center justify-between gap-1">
+                  <p className="text-xs font-medium text-muted-foreground truncate">Заявки</p>
                   {orderStats.pending > 0 && (
-                    <Badge variant="secondary" className="text-xs px-2 py-0">
+                    <Badge variant="secondary" className="text-xs px-1.5 py-0 flex-shrink-0">
                       {orderStats.pending}
                     </Badge>
                   )}
@@ -156,38 +156,38 @@ const Index = () => {
         </div>
 
         <Tabs defaultValue="checklists" className="w-full">
-          <div className="sticky top-[57px] z-40 bg-gradient-to-br from-background via-background to-muted/20 pb-3 pt-1">
-            <TabsList className="w-full justify-start overflow-x-auto flex-nowrap h-auto p-1 gap-1">
-              <TabsTrigger value="checklists" className="flex items-center gap-1.5 whitespace-nowrap px-3 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                <Icon name="CheckSquare" size={16} />
-                <span className="text-sm">Чек-листы</span>
+          <div className="sticky top-[53px] z-40 bg-gradient-to-br from-background via-background to-muted/20 pb-2 pt-1">
+            <TabsList className="w-full justify-start overflow-x-auto flex-nowrap h-auto p-0.5 gap-0.5 scrollbar-hide">
+              <TabsTrigger value="checklists" className="flex items-center gap-1 whitespace-nowrap px-2.5 py-1.5 text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                <Icon name="CheckSquare" size={14} />
+                <span>Чек-листы</span>
               </TabsTrigger>
-              <TabsTrigger value="ttk" className="flex items-center gap-1.5 whitespace-nowrap px-3 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                <Icon name="BookOpen" size={16} />
-                <span className="text-sm">ТТК</span>
+              <TabsTrigger value="ttk" className="flex items-center gap-1 whitespace-nowrap px-2.5 py-1.5 text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                <Icon name="BookOpen" size={14} />
+                <span>ТТК</span>
               </TabsTrigger>
-              <TabsTrigger value="inventory" className="flex items-center gap-1.5 whitespace-nowrap px-3 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                <Icon name="Package" size={16} />
-                <span className="text-sm">Инвент.</span>
+              <TabsTrigger value="inventory" className="flex items-center gap-1 whitespace-nowrap px-2.5 py-1.5 text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                <Icon name="Package" size={14} />
+                <span>Инвент.</span>
               </TabsTrigger>
-              <TabsTrigger value="orders" className="flex items-center gap-1.5 whitespace-nowrap px-3 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                <Icon name="ShoppingCart" size={16} />
-                <span className="text-sm">Закупки</span>
+              <TabsTrigger value="orders" className="flex items-center gap-1 whitespace-nowrap px-2.5 py-1.5 text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                <Icon name="ShoppingCart" size={14} />
+                <span>Закупки</span>
               </TabsTrigger>
-              <TabsTrigger value="writeoffs" className="flex items-center gap-1.5 whitespace-nowrap px-3 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                <Icon name="Trash2" size={16} />
-                <span className="text-sm">Списания</span>
+              <TabsTrigger value="writeoffs" className="flex items-center gap-1 whitespace-nowrap px-2.5 py-1.5 text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                <Icon name="Trash2" size={14} />
+                <span>Списания</span>
               </TabsTrigger>
               {isChefOrSousChef() && (
-                <TabsTrigger value="employees" className="flex items-center gap-1.5 whitespace-nowrap px-3 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                  <Icon name="Users" size={16} />
-                  <span className="text-sm">Команда</span>
+                <TabsTrigger value="employees" className="flex items-center gap-1 whitespace-nowrap px-2.5 py-1.5 text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                  <Icon name="Users" size={14} />
+                  <span>Команда</span>
                 </TabsTrigger>
               )}
             </TabsList>
           </div>
 
-          <div className="mt-3">
+          <div className="mt-2">
             <ChecklistsTab 
               checklistList={checklistList}
               isChefOrSousChef={isChefOrSousChef}
