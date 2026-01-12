@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -13,13 +13,9 @@ import InventoryTab from '@/components/tabs/InventoryTab';
 import EmployeesTab from '@/components/tabs/EmployeesTab';
 import ProductOrdersTab from '@/components/tabs/ProductOrdersTab';
 import { WriteoffTab } from '@/components/tabs/OrdersAndWriteoffTabs';
-import { toast } from 'sonner';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { useWorkshopStatistics, WorkshopReportDialog } from '@/components/WorkshopStatistics';
+import { useInventoryManagement } from '@/components/InventoryManagement';
+import { useOrdersManagement, OrdersDialog } from '@/components/OrdersManagement';
 
 const Index = () => {
   const { user, logout, isChefOrSousChef } = useAuth();
@@ -59,520 +55,219 @@ const Index = () => {
     );
   }
 
-  const [activeInventory, setActiveInventory] = useState<any>(() => {
-    const saved = localStorage.getItem('kitchenCosmo_activeInventory');
-    return saved ? JSON.parse(saved) : null;
-  });
+  const {
+    activeInventory,
+    setActiveInventory,
+    inventoryHistory,
+    setInventoryHistory,
+    lowStockItems,
+    totalInventoryValue,
+    mockIngredients,
+    mockOrders
+  } = useInventoryManagement();
 
-  const [inventoryHistory, setInventoryHistory] = useState<any[]>(() => {
-    const saved = localStorage.getItem('kitchenCosmo_inventoryHistory');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const {
+    orderStats,
+    ordersData,
+    showOrdersDialog,
+    setShowOrdersDialog,
+    selectedOrderStatus,
+    setSelectedOrderStatus
+  } = useOrdersManagement(user?.restaurantId);
 
-  const [orderStats, setOrderStats] = useState({ pending: 0, ordered: 0, completed: 0, total: 0 });
-  const [ordersData, setOrdersData] = useState<any[]>([]);
-  const [showOrdersDialog, setShowOrdersDialog] = useState(false);
-  const [selectedOrderStatus, setSelectedOrderStatus] = useState<string | null>(null);
-
-  useEffect(() => {
-    const loadOrderStats = async () => {
-      if (!user?.restaurantId) return;
-      try {
-        const response = await fetch(`https://functions.poehali.dev/2ff9cc4a-f745-42e6-bca2-f02bd90f39fd?action=get_orders&restaurantId=${user.restaurantId}`);
-        if (response.ok) {
-          const data = await response.json();
-          const orders = data.orders || [];
-          setOrdersData(orders);
-          setOrderStats({
-            pending: orders.filter((o: any) => o.status === 'pending').length,
-            ordered: orders.filter((o: any) => o.status === 'ordered').length,
-            completed: orders.filter((o: any) => o.status === 'completed').length,
-            total: orders.length
-          });
-        }
-      } catch (error) {
-        console.error('Error loading order stats:', error);
-      }
-    };
-    loadOrderStats();
-    const interval = setInterval(loadOrderStats, 30000);
-    return () => clearInterval(interval);
-  }, [user?.restaurantId]);
-
-  const mockIngredients = [
-    { id: 1, name: 'Томаты', category: 'Овощи', quantity: 15, unit: 'кг', minStock: 10, price: 120 },
-    { id: 2, name: 'Говядина', category: 'Мясо', quantity: 8, unit: 'кг', minStock: 12, price: 650 },
-    { id: 3, name: 'Базилик', category: 'Специи', quantity: 0.5, unit: 'кг', minStock: 1, price: 450 },
-    { id: 4, name: 'Оливковое масло', category: 'Масла', quantity: 3, unit: 'л', minStock: 5, price: 890 },
-    { id: 5, name: 'Лосось', category: 'Рыба', quantity: 6, unit: 'кг', minStock: 8, price: 1200 },
-  ];
-
-  const mockOrders = [
-    { id: 1, supplier: 'Мясной двор', status: 'pending', items: 5, total: 12500, date: '2026-01-15' },
-    { id: 2, supplier: 'ОвощБаза', status: 'sent', items: 8, total: 4200, date: '2026-01-12' },
-    { id: 3, supplier: 'Рыбный мир', status: 'delivered', items: 3, total: 8900, date: '2026-01-10' },
-  ];
-
-  const [showWorkshopReport, setShowWorkshopReport] = useState(false);
-  const [expandedStatus, setExpandedStatus] = useState<{workshop: string, status: string} | null>(null);
-  const [notifiedIssues, setNotifiedIssues] = useState<Set<string>>(new Set());
-
-  const playNotificationSound = (type: 'critical' | 'warning') => {
-    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-    const oscillator = audioContext.createOscillator();
-    const gainNode = audioContext.createGain();
-    
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContext.destination);
-    
-    if (type === 'critical') {
-      oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
-      oscillator.frequency.setValueAtTime(600, audioContext.currentTime + 0.1);
-      oscillator.frequency.setValueAtTime(800, audioContext.currentTime + 0.2);
-      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
-      oscillator.start(audioContext.currentTime);
-      oscillator.stop(audioContext.currentTime + 0.3);
-    } else {
-      oscillator.frequency.setValueAtTime(600, audioContext.currentTime);
-      gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
-      oscillator.start(audioContext.currentTime);
-      oscillator.stop(audioContext.currentTime + 0.2);
-    }
-  };
-
-  useEffect(() => {
-    checklistList.forEach(checklist => {
-      checklist.items.forEach((item: any) => {
-        const itemKey = `${checklist.id}-${item.id}`;
-        if ((item.status === 'in_restriction' || item.status === 'in_stop') && !notifiedIssues.has(itemKey)) {
-          const statusText = item.status === 'in_restriction' ? 'В ограничении' : 'В стопе';
-          playNotificationSound('critical');
-          toast.error(`${statusText}: ${item.text}`, {
-            description: `Цех: ${checklist.workshop} | Чек-лист: ${checklist.name}`,
-            duration: 8000,
-          });
-          setNotifiedIssues(prev => new Set(prev).add(itemKey));
-        }
-      });
-    });
-  }, [checklistList]);
-
-
-
-  const lowStockItems = mockIngredients.filter(item => item.quantity < item.minStock);
-  const totalInventoryValue = mockIngredients.reduce((sum, item) => sum + (item.quantity * item.price), 0);
-
-  const getWorkshopStats = () => {
-    const stats: any = {};
-    checklistList.forEach(cl => {
-      if (!stats[cl.workshop]) {
-        stats[cl.workshop] = { 
-          done: 0, 
-          inRestriction: 0, 
-          inStop: 0, 
-          pending: 0,
-          items: { done: [], inRestriction: [], inStop: [], pending: [] }
-        };
-      }
-      cl.items.forEach((item: any) => {
-        const itemWithChecklist = { ...item, checklistName: cl.name };
-        if (item.status === 'done') {
-          stats[cl.workshop].done++;
-          stats[cl.workshop].items.done.push(itemWithChecklist);
-        } else if (item.status === 'in_restriction') {
-          stats[cl.workshop].inRestriction++;
-          stats[cl.workshop].items.inRestriction.push(itemWithChecklist);
-        } else if (item.status === 'in_stop') {
-          stats[cl.workshop].inStop++;
-          stats[cl.workshop].items.inStop.push(itemWithChecklist);
-        } else {
-          stats[cl.workshop].pending++;
-          stats[cl.workshop].items.pending.push(itemWithChecklist);
-        }
-      });
-    });
-    return stats;
-  };
-
-  const workshopStats = getWorkshopStats();
-  const totalIssues = Object.values(workshopStats).reduce((sum: number, ws: any) => 
-    sum + ws.inRestriction + ws.inStop, 0
-  );
+  const {
+    showWorkshopReport,
+    setShowWorkshopReport,
+    expandedStatus,
+    setExpandedStatus,
+    workshopStats,
+    totalIssues
+  } = useWorkshopStatistics(checklistList);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 safe-top safe-bottom">
-      <div className="container mx-auto px-4 py-3 sm:py-6 max-w-7xl pb-safe">
-        <header className="mb-4 sm:mb-8 animate-fade-in">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4 sm:mb-6">
-            <div className="flex-1">
-              <h1 className="text-xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                KitchenCosmo
-              </h1>
-              <p className="text-xs sm:text-base text-muted-foreground mt-1">Система управления кухней</p>
-            </div>
-            <div className="flex items-center gap-2 w-full sm:w-auto">
-              <Badge variant="secondary" className="text-xs px-3 py-1.5 truncate flex-1 sm:flex-initial">
-                {user.role === 'chef' ? 'Шеф' : user.role === 'sous_chef' ? 'Су-шеф' : 'Повар'}: {user.name}
-              </Badge>
-              <Button variant="outline" size="icon" className="touch-target flex-shrink-0 h-10 w-10">
-                <Icon name="Bell" size={20} />
-              </Button>
-              <Button variant="outline" size="icon" className="touch-target flex-shrink-0 h-10 w-10" onClick={logout}>
-                <Icon name="LogOut" size={20} />
-              </Button>
-            </div>
+      <div className="max-w-7xl mx-auto p-4 pb-24">
+        <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
+          <div>
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+              KitchenCosmo
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              {user?.role === 'chef' ? '👨‍🍳 Шеф-повар' : user?.role === 'sous_chef' ? '👨‍🍳 Су-шеф' : '👨‍🍳 Повар'} • {user?.name}
+            </p>
           </div>
+          <Button variant="outline" onClick={() => { logout(); window.location.reload(); }}>
+            <Icon name="LogOut" size={18} className="mr-2" />
+            Выйти
+          </Button>
+        </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <Card className="border-primary/20 hover:border-primary/40 transition-all active:scale-98">
-              <CardContent className="pt-4 sm:pt-6">
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-xs sm:text-sm text-muted-foreground mb-1">Активные заявки</p>
-                      <p className="text-2xl sm:text-3xl font-bold text-primary">{orderStats.total}</p>
-                    </div>
-                    <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                      <Icon name="ShoppingCart" size={20} className="text-primary sm:w-6 sm:h-6" />
-                    </div>
-                  </div>
-                  {orderStats.total > 0 && (
-                    <div className="grid grid-cols-3 gap-2 pt-2 border-t">
-                      <div 
-                        className="text-center cursor-pointer active:bg-yellow-500/20 rounded-lg p-2.5 sm:p-2 transition-colors touch-target"
-                        onClick={() => {
-                          setSelectedOrderStatus('pending');
-                          setShowOrdersDialog(true);
-                        }}
-                      >
-                        <p className="text-[10px] sm:text-xs text-muted-foreground mb-1">Ожидают</p>
-                        <p className="text-base sm:text-lg font-bold text-yellow-600">{orderStats.pending}</p>
-                      </div>
-                      <div 
-                        className="text-center cursor-pointer active:bg-blue-500/20 rounded-lg p-2.5 sm:p-2 transition-colors touch-target"
-                        onClick={() => {
-                          setSelectedOrderStatus('ordered');
-                          setShowOrdersDialog(true);
-                        }}
-                      >
-                        <p className="text-[10px] sm:text-xs text-muted-foreground mb-1">Заказано</p>
-                        <p className="text-base sm:text-lg font-bold text-blue-600">{orderStats.ordered}</p>
-                      </div>
-                      <div 
-                        className="text-center cursor-pointer active:bg-green-500/20 rounded-lg p-2.5 sm:p-2 transition-colors touch-target"
-                        onClick={() => {
-                          setSelectedOrderStatus('completed');
-                          setShowOrdersDialog(true);
-                        }}
-                      >
-                        <p className="text-[10px] sm:text-xs text-muted-foreground mb-1">Выполнено</p>
-                        <p className="text-base sm:text-lg font-bold text-green-600">{orderStats.completed}</p>
-                      </div>
-                    </div>
-                  )}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => setShowWorkshopReport(true)}>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Цехи</p>
+                  <p className="text-2xl font-bold">{Object.keys(workshopStats).length}</p>
                 </div>
-              </CardContent>
-            </Card>
-
-            {isChefOrSousChef() && (
-            <Card 
-              className="border-secondary/20 hover:border-secondary/40 transition-all active:scale-98 cursor-pointer touch-target"
-              onClick={() => setShowWorkshopReport(true)}
-            >
-              <CardContent className="pt-4 sm:pt-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs sm:text-sm text-muted-foreground mb-1">Отчёты по цехам</p>
-                    <p className="text-2xl sm:text-3xl font-bold text-secondary">{totalIssues}</p>
-                    <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">проблем выявлено</p>
-                  </div>
-                  <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-secondary/10 flex items-center justify-center">
-                    <Icon name="BarChart" size={20} className="text-secondary sm:w-6 sm:h-6" />
-                  </div>
+                <div className="w-12 h-12 bg-blue-500/10 rounded-full flex items-center justify-center">
+                  <Icon name="Factory" size={24} className="text-blue-500" />
                 </div>
-              </CardContent>
-            </Card>
-            )}
-          </div>
-        </header>
+              </div>
+            </CardContent>
+          </Card>
 
-        <Tabs defaultValue="ttk" className="space-y-3 sm:space-y-6">
-          <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm pb-2 -mx-4 px-4">
-            <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 lg:w-auto lg:inline-grid bg-card/50 backdrop-blur-sm gap-1 h-auto p-1">
-              <TabsTrigger value="ttk" className="gap-1 sm:gap-2 text-xs sm:text-sm px-3 py-2.5 sm:px-4 touch-target">
-                <Icon name="FileText" size={18} />
-                <span>ТТК</span>
-              </TabsTrigger>
-              <TabsTrigger value="checklists" className="gap-1 sm:gap-2 text-xs sm:text-sm px-3 py-2.5 sm:px-4 touch-target">
+          <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => setShowWorkshopReport(true)}>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Проблемы</p>
+                  <p className="text-2xl font-bold">{totalIssues}</p>
+                </div>
+                <div className="w-12 h-12 bg-red-500/10 rounded-full flex items-center justify-center">
+                  <Icon name="AlertCircle" size={24} className="text-red-500" />
+                </div>
+              </div>
+              {totalIssues > 0 && (
+                <Badge variant="destructive" className="mt-2">
+                  Требуется внимание
+                </Badge>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => setShowOrdersDialog(true)}>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Заявки</p>
+                  <p className="text-2xl font-bold">{orderStats.total}</p>
+                </div>
+                <div className="w-12 h-12 bg-green-500/10 rounded-full flex items-center justify-center">
+                  <Icon name="Package" size={24} className="text-green-500" />
+                </div>
+              </div>
+              {orderStats.pending > 0 && (
+                <Badge variant="outline" className="mt-2">
+                  {orderStats.pending} ожидает
+                </Badge>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Склад</p>
+                  <p className="text-2xl font-bold">{totalInventoryValue.toLocaleString()}₽</p>
+                </div>
+                <div className="w-12 h-12 bg-orange-500/10 rounded-full flex items-center justify-center">
+                  <Icon name="Warehouse" size={24} className="text-orange-500" />
+                </div>
+              </div>
+              {lowStockItems.length > 0 && (
+                <Badge variant="outline" className="mt-2 border-orange-500 text-orange-500">
+                  {lowStockItems.length} на исходе
+                </Badge>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        <Tabs defaultValue="checklists" className="w-full">
+          <div className="sticky top-0 z-10 bg-gradient-to-br from-background via-background to-muted/20 pb-4 safe-top">
+            <TabsList className="w-full justify-start overflow-x-auto flex-nowrap h-auto p-1">
+              <TabsTrigger value="checklists" className="flex items-center gap-2 whitespace-nowrap touch-target">
                 <Icon name="CheckSquare" size={18} />
-                <span className="hidden xs:inline">Чек-листы</span>
-                <span className="xs:hidden">Чек</span>
+                <span className="hidden sm:inline">Чек-листы</span>
+                <span className="sm:hidden">Чек-л.</span>
               </TabsTrigger>
-              <TabsTrigger value="products" className="gap-1 sm:gap-2 text-xs sm:text-sm px-3 py-2.5 sm:px-4 touch-target">
+              <TabsTrigger value="ttk" className="flex items-center gap-2 whitespace-nowrap touch-target">
+                <Icon name="BookOpen" size={18} />
+                <span className="hidden sm:inline">ТТК</span>
+                <span className="sm:hidden">ТТК</span>
+              </TabsTrigger>
+              <TabsTrigger value="inventory" className="flex items-center gap-2 whitespace-nowrap touch-target">
+                <Icon name="Package" size={18} />
+                <span className="hidden sm:inline">Инвентаризация</span>
+                <span className="sm:hidden">Инвент.</span>
+              </TabsTrigger>
+              <TabsTrigger value="orders" className="flex items-center gap-2 whitespace-nowrap touch-target">
                 <Icon name="ShoppingCart" size={18} />
-                <span className="hidden sm:inline">Продукты</span>
-                <span className="sm:hidden">Прод.</span>
+                <span className="hidden sm:inline">Заявки на закупку</span>
+                <span className="sm:hidden">Закупки</span>
+              </TabsTrigger>
+              <TabsTrigger value="writeoffs" className="flex items-center gap-2 whitespace-nowrap touch-target">
+                <Icon name="Trash2" size={18} />
+                <span className="hidden sm:inline">Списания</span>
+                <span className="sm:hidden">Списан.</span>
               </TabsTrigger>
               {isChefOrSousChef() && (
-                <TabsTrigger value="employees" className="gap-1 sm:gap-2 text-xs sm:text-sm px-3 py-2.5 sm:px-4 touch-target">
+                <TabsTrigger value="employees" className="flex items-center gap-2 whitespace-nowrap touch-target">
                   <Icon name="Users" size={18} />
-                  <span>Сотр.</span>
+                  <span className="hidden sm:inline">Сотрудники</span>
+                  <span className="sm:hidden">Сотруд.</span>
                 </TabsTrigger>
               )}
-              <TabsTrigger value="inventory" className="gap-1 sm:gap-2 text-xs sm:text-sm px-3 py-2.5 sm:px-4 touch-target">
-                <Icon name="ClipboardList" size={18} />
-                <span className="hidden sm:inline">Инвентаризация</span>
-                <span className="sm:hidden">Инв.</span>
-              </TabsTrigger>
-              <TabsTrigger value="writeoff" className="gap-1 sm:gap-2 text-xs sm:text-sm px-3 py-2.5 sm:px-4 touch-target">
-                <Icon name="MinusCircle" size={18} />
-                <span>Списан.</span>
-              </TabsTrigger>
             </TabsList>
           </div>
 
-          <TtkTab 
-            ttkList={ttkList} 
-            isChefOrSousChef={isChefOrSousChef}
-            onCreateTTK={createTTK}
-            onUpdateTTK={updateTTK}
-            onDeleteTTK={deleteTTK}
-          />
+          <div className="mt-6">
+            <ChecklistsTab 
+              checklists={checklistList}
+              onCreateChecklist={createChecklist}
+              onUpdateChecklist={updateChecklist}
+              onDeleteChecklist={deleteChecklist}
+              onUpdateChecklistItem={updateChecklistItem}
+              loading={loading}
+            />
 
-          <ChecklistsTab 
-            checklistList={checklistList} 
-            isChefOrSousChef={isChefOrSousChef}
-            userName={user.name}
-            onCreateChecklist={createChecklist}
-            onUpdateChecklist={updateChecklist}
-            onDeleteChecklist={deleteChecklist}
-            onUpdateItem={updateChecklistItem}
-          />
+            <TtkTab 
+              ttkList={ttkList}
+              onCreateTTK={createTTK}
+              onUpdateTTK={updateTTK}
+              onDeleteTTK={deleteTTK}
+              loading={loading}
+            />
 
-          <InventoryTab 
-            activeInventory={activeInventory} 
-            setActiveInventory={setActiveInventory} 
-            inventoryHistory={inventoryHistory} 
-            setInventoryHistory={setInventoryHistory} 
-            isChefOrSousChef={isChefOrSousChef} 
-            userName={user.name} 
-          />
+            <InventoryTab 
+              ingredients={mockIngredients}
+              orders={mockOrders}
+              activeInventory={activeInventory}
+              setActiveInventory={setActiveInventory}
+              inventoryHistory={inventoryHistory}
+              setInventoryHistory={setInventoryHistory}
+              lowStockItems={lowStockItems}
+              totalInventoryValue={totalInventoryValue}
+            />
 
-          <ProductOrdersTab restaurantId={user?.restaurantId} userId={user?.id} isChefOrSousChef={isChefOrSousChef} />
-          
-          <WriteoffTab />
+            <ProductOrdersTab restaurantId={user?.restaurantId} />
 
-          {isChefOrSousChef() && <EmployeesTab />}
+            <WriteoffTab restaurantId={user?.restaurantId} />
+
+            {isChefOrSousChef() && (
+              <EmployeesTab restaurantId={user?.restaurantId} />
+            )}
+          </div>
         </Tabs>
-
-        <Dialog 
-          open={showWorkshopReport} 
-          onOpenChange={(open) => {
-            setShowWorkshopReport(open);
-            if (!open) setExpandedStatus(null);
-          }}
-        >
-          <DialogContent className="max-w-[95vw] sm:max-w-4xl max-h-[85vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle className="text-lg sm:text-xl">Отчёт по цехам</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 sm:space-y-6 pt-4">
-              {Object.entries(workshopStats).map(([workshop, stats]: [string, any]) => {
-                const totalItems = stats.done + stats.inRestriction + stats.inStop + stats.pending;
-                const completionRate = totalItems > 0 ? Math.round((stats.done / totalItems) * 100) : 0;
-                
-                return (
-                  <Card key={workshop} className="border-border/50">
-                    <CardContent className="pt-4 sm:pt-6 px-3 sm:px-6">
-                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0 mb-3 sm:mb-4">
-                        <div>
-                          <h3 className="font-semibold text-base sm:text-lg">{workshop}</h3>
-                          <p className="text-xs sm:text-sm text-muted-foreground">Всего пунктов: {totalItems}</p>
-                        </div>
-                        <Badge variant={completionRate === 100 ? 'default' : completionRate >= 70 ? 'secondary' : 'destructive'} className="text-xs sm:text-sm">
-                          {completionRate}% выполнено
-                        </Badge>
-                      </div>
-                      <div className="grid grid-cols-2 gap-2 sm:gap-4">
-                        <div 
-                          className="p-3 sm:p-4 rounded-lg bg-green-500/10 border border-green-500/20 cursor-pointer hover:bg-green-500/20 transition-all"
-                          onClick={() => setExpandedStatus(expandedStatus?.workshop === workshop && expandedStatus?.status === 'done' ? null : { workshop, status: 'done' })}
-                        >
-                          <div className="flex items-center gap-1 sm:gap-2 mb-1 sm:mb-2">
-                            <Icon name="Check" size={16} className="text-green-600" />
-                            <p className="text-xs sm:text-sm font-medium">Готово</p>
-                          </div>
-                          <p className="text-xl sm:text-2xl font-bold text-green-600">{stats.done}</p>
-                        </div>
-                        <div 
-                          className="p-3 sm:p-4 rounded-lg bg-orange-500/10 border border-orange-500/20 cursor-pointer hover:bg-orange-500/20 transition-all"
-                          onClick={() => setExpandedStatus(expandedStatus?.workshop === workshop && expandedStatus?.status === 'inRestriction' ? null : { workshop, status: 'inRestriction' })}
-                        >
-                          <div className="flex items-center gap-1 sm:gap-2 mb-1 sm:mb-2">
-                            <Icon name="AlertTriangle" size={16} className="text-orange-600" />
-                            <p className="text-xs sm:text-sm font-medium">В ограничении</p>
-                          </div>
-                          <p className="text-xl sm:text-2xl font-bold text-orange-600">{stats.inRestriction}</p>
-                        </div>
-                        <div 
-                          className="p-3 sm:p-4 rounded-lg bg-destructive/10 border border-destructive/20 cursor-pointer hover:bg-destructive/20 transition-all"
-                          onClick={() => setExpandedStatus(expandedStatus?.workshop === workshop && expandedStatus?.status === 'inStop' ? null : { workshop, status: 'inStop' })}
-                        >
-                          <div className="flex items-center gap-1 sm:gap-2 mb-1 sm:mb-2">
-                            <Icon name="XCircle" size={16} className="text-destructive" />
-                            <p className="text-xs sm:text-sm font-medium">В стопе</p>
-                          </div>
-                          <p className="text-xl sm:text-2xl font-bold text-destructive">{stats.inStop}</p>
-                        </div>
-                        <div 
-                          className="p-3 sm:p-4 rounded-lg bg-muted/50 border border-border cursor-pointer hover:bg-muted transition-all"
-                          onClick={() => setExpandedStatus(expandedStatus?.workshop === workshop && expandedStatus?.status === 'pending' ? null : { workshop, status: 'pending' })}
-                        >
-                          <div className="flex items-center gap-1 sm:gap-2 mb-1 sm:mb-2">
-                            <Icon name="Clock" size={16} className="text-muted-foreground" />
-                            <p className="text-xs sm:text-sm font-medium">Ожидает</p>
-                          </div>
-                          <p className="text-xl sm:text-2xl font-bold text-muted-foreground">{stats.pending}</p>
-                        </div>
-                      </div>
-                      {expandedStatus?.workshop === workshop && stats.items && stats.items[expandedStatus.status] && (
-                        <div className="mt-3 sm:mt-4 p-3 sm:p-4 rounded-lg bg-muted/30 border border-border">
-                          <h4 className="text-sm sm:text-base font-semibold mb-2 sm:mb-3 flex items-center gap-2">
-                            <Icon name="List" size={16} />
-                            {expandedStatus.status === 'done' && 'Готовые пункты'}
-                            {expandedStatus.status === 'inRestriction' && 'Пункты в ограничении'}
-                            {expandedStatus.status === 'inStop' && 'Пункты в стопе'}
-                            {expandedStatus.status === 'pending' && 'Пункты в ожидании'}
-                          </h4>
-                          <div className="space-y-2">
-                            {stats.items[expandedStatus.status].map((item: any, idx: number) => (
-                              <div key={idx} className="p-2 sm:p-3 rounded-lg bg-background border border-border/50">
-                                <p className="text-xs sm:text-sm font-medium">{item.text}</p>
-                                <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">Чек-лист: {item.checklistName}</p>
-                                {item.timestamp && (
-                                  <p className="text-[10px] sm:text-xs text-muted-foreground">Обновлено: {new Date(item.timestamp).toLocaleString('ru-RU')}</p>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                );
-              })}
-              {Object.keys(workshopStats).length === 0 && (
-                <div className="text-center py-12">
-                  <Icon name="FileText" size={48} className="mx-auto text-muted-foreground mb-4" />
-                  <p className="text-muted-foreground">Нет данных по чек-листам</p>
-                </div>
-              )}
-            </div>
-          </DialogContent>
-        </Dialog>
-
-        <Dialog 
-          open={showOrdersDialog} 
-          onOpenChange={setShowOrdersDialog}
-        >
-          <DialogContent className="max-w-[95vw] sm:max-w-3xl max-h-[85vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle className="text-lg sm:text-xl flex items-center gap-2">
-                {selectedOrderStatus === 'pending' && (
-                  <>
-                    <Icon name="Clock" size={20} className="text-yellow-600" />
-                    Заявки в ожидании
-                  </>
-                )}
-                {selectedOrderStatus === 'ordered' && (
-                  <>
-                    <Icon name="ShoppingCart" size={20} className="text-blue-600" />
-                    Заказанные заявки
-                  </>
-                )}
-                {selectedOrderStatus === 'completed' && (
-                  <>
-                    <Icon name="CheckCircle2" size={20} className="text-green-600" />
-                    Выполненные заявки
-                  </>
-                )}
-              </DialogTitle>
-            </DialogHeader>
-            <div className="space-y-3 pt-4">
-              {ordersData
-                .filter(order => order.status === selectedOrderStatus)
-                .map(order => (
-                  <Card key={order.id} className="border">
-                    <CardContent className="pt-4">
-                      <div className="flex items-start justify-between mb-3">
-                        <div>
-                          <h3 className="font-semibold text-base">Заявка #{order.id}</h3>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            От {order.creator_name} • {new Date(order.created_at).toLocaleDateString('ru-RU')}
-                          </p>
-                        </div>
-                        <Badge 
-                          variant={selectedOrderStatus === 'completed' ? 'default' : 'outline'}
-                          className={
-                            selectedOrderStatus === 'pending' 
-                              ? 'bg-yellow-500/10 text-yellow-700 border-yellow-500/20' 
-                              : selectedOrderStatus === 'ordered'
-                              ? 'bg-blue-500/10 text-blue-700 border-blue-500/20'
-                              : ''
-                          }
-                        >
-                          {selectedOrderStatus === 'pending' && 'Ожидает'}
-                          {selectedOrderStatus === 'ordered' && 'Заказано'}
-                          {selectedOrderStatus === 'completed' && 'Выполнено'}
-                        </Badge>
-                      </div>
-                      <div className="space-y-2">
-                        {Object.entries(
-                          order.items.reduce((acc: any, item: any) => {
-                            if (!acc[item.category_name]) acc[item.category_name] = [];
-                            acc[item.category_name].push(item);
-                            return acc;
-                          }, {})
-                        ).map(([categoryName, items]: [string, any]) => (
-                          <div key={categoryName}>
-                            <h4 className="text-xs font-semibold text-muted-foreground mb-1 flex items-center gap-1">
-                              <Icon name="FolderOpen" size={12} />
-                              {categoryName}
-                            </h4>
-                            <div className="space-y-1">
-                              {items.map((item: any) => (
-                                <div key={item.id} className="flex items-center justify-between p-2 rounded-lg bg-muted/30 text-sm">
-                                  <span>{item.product_name}</span>
-                                  <div className="flex items-center gap-2">
-                                    <Badge variant="outline" className="text-xs">{item.unit}</Badge>
-                                    <Badge 
-                                      variant={item.status === 'to_order' ? 'destructive' : 'default'}
-                                      className="text-xs"
-                                    >
-                                      {item.status === 'to_order' ? 'Заказать' : 'В достатке'}
-                                    </Badge>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              {ordersData.filter(order => order.status === selectedOrderStatus).length === 0 && (
-                <div className="text-center py-8">
-                  <Icon name="FileText" size={48} className="mx-auto text-muted-foreground mb-3" />
-                  <p className="text-muted-foreground">Нет заявок с этим статусом</p>
-                </div>
-              )}
-            </div>
-          </DialogContent>
-        </Dialog>
       </div>
+
+      <WorkshopReportDialog 
+        open={showWorkshopReport}
+        onOpenChange={setShowWorkshopReport}
+        workshopStats={workshopStats}
+        expandedStatus={expandedStatus}
+        setExpandedStatus={setExpandedStatus}
+      />
+
+      <OrdersDialog 
+        open={showOrdersDialog}
+        onOpenChange={setShowOrdersDialog}
+        ordersData={ordersData}
+        selectedOrderStatus={selectedOrderStatus}
+        setSelectedOrderStatus={setSelectedOrderStatus}
+      />
     </div>
   );
 };
