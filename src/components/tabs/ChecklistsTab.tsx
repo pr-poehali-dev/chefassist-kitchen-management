@@ -182,7 +182,7 @@ export default function ChecklistsTab({ checklistList, isChefOrSousChef, userNam
                       </div>
                     </DialogContent>
                   </Dialog>
-                  <Dialog onOpenChange={(open) => { if (!open) { setNewChecklist({ name: '', workshop: '', items: '' }); setEditingChecklist(null); } }}>
+                  <Dialog onOpenChange={(open) => { if (!open) { setNewChecklist({ name: '', workshop: '', items: '', responsible: '' }); setEditingChecklist(null); } }}>
                     <DialogTrigger asChild>
                       <Button size="sm" className="gap-2">
                         <Icon name="Plus" size={18} />
