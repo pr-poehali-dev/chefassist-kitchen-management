@@ -64,7 +64,10 @@ def handler(event: dict, context) -> dict:
 
 def get_db_connection():
     '''Подключение к базе данных'''
-    return psycopg2.connect(os.environ['DATABASE_URL'])
+    db_url = os.environ.get('DATABASE_URL')
+    if not db_url:
+        raise Exception('DATABASE_URL not configured')
+    return psycopg2.connect(db_url)
 
 
 def generate_invite_code() -> str:
