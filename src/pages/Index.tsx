@@ -232,14 +232,12 @@ const Index = () => {
             />
 
             <InventoryTab 
-              ingredients={mockIngredients}
-              orders={mockOrders}
               activeInventory={activeInventory}
               setActiveInventory={setActiveInventory}
               inventoryHistory={inventoryHistory}
               setInventoryHistory={setInventoryHistory}
-              lowStockItems={lowStockItems}
-              totalInventoryValue={totalInventoryValue}
+              isChefOrSousChef={isChefOrSousChef}
+              userName={user?.name || ''}
             />
 
             <ProductOrdersTab restaurantId={user?.restaurantId} />
