@@ -233,10 +233,10 @@ const Index = () => {
 
             <TtkTab 
               ttkList={ttkList}
+              isChefOrSousChef={isChefOrSousChef}
               onCreateTTK={createTTK}
               onUpdateTTK={updateTTK}
               onDeleteTTK={deleteTTK}
-              loading={loading}
             />
 
             <InventoryTab 
