@@ -85,104 +85,109 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 safe-top safe-bottom">
-      <div className="max-w-7xl mx-auto p-4 pb-24">
-        <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
-          <div className="flex items-center gap-3">
-            <img 
-              src="https://cdn.poehali.dev/projects/ca4481ee-9d03-47bf-afcd-998c0128f9ce/files/2f8a5a42-7dbe-437b-9787-b8cd165e8f90.jpg" 
-              alt="KitchenCosmo Logo" 
-              className="h-12 w-12 rounded-lg object-cover"
-            />
-            <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                KitchenCosmo
-              </h1>
-              <p className="text-sm text-muted-foreground">
-                {user?.role === 'chef' ? '👨‍🍳 Шеф-повар' : user?.role === 'sous_chef' ? '👨‍🍳 Су-шеф' : '👨‍🍳 Повар'} • {user?.name}
-              </p>
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+      <div className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
+        <div className="max-w-7xl mx-auto px-4 py-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <img 
+                src="https://cdn.poehali.dev/projects/ca4481ee-9d03-47bf-afcd-998c0128f9ce/files/2f8a5a42-7dbe-437b-9787-b8cd165e8f90.jpg" 
+                alt="KitchenCosmo Logo" 
+                className="h-10 w-10 rounded-lg object-cover"
+              />
+              <div>
+                <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                  KitchenCosmo
+                </h1>
+                <p className="text-xs text-muted-foreground">
+                  {user?.role === 'chef' ? 'Шеф' : user?.role === 'sous_chef' ? 'Су-шеф' : 'Повар'} • {user?.name}
+                </p>
+              </div>
             </div>
+            <Button variant="ghost" size="sm" onClick={() => { logout(); window.location.reload(); }}>
+              <Icon name="LogOut" size={18} />
+            </Button>
           </div>
-          <Button variant="outline" onClick={() => { logout(); window.location.reload(); }}>
-            <Icon name="LogOut" size={18} className="mr-2" />
-            Выйти
-          </Button>
         </div>
+      </div>
+      <div className="max-w-7xl mx-auto p-4 pb-24">
 
-        <div className="grid grid-cols-2 gap-4 mb-6">
-          <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => setShowWorkshopReport(true)}>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Чек-листы</p>
-                  <p className="text-2xl font-bold">{Object.keys(workshopStats).length}</p>
+        <div className="grid grid-cols-2 gap-3 mb-6">
+          <Card 
+            className="cursor-pointer active:scale-95 transition-all duration-150 border-2" 
+            onClick={() => setShowWorkshopReport(true)}
+          >
+            <CardContent className="p-4">
+              <div className="flex flex-col gap-3">
+                <div className="flex items-center justify-between">
+                  <div className="w-10 h-10 bg-blue-500/10 rounded-xl flex items-center justify-center">
+                    <Icon name="CheckSquare" size={20} className="text-blue-500" />
+                  </div>
+                  <p className="text-3xl font-bold">{Object.keys(workshopStats).length}</p>
                 </div>
-                <div className="w-12 h-12 bg-blue-500/10 rounded-full flex items-center justify-center">
-                  <Icon name="CheckSquare" size={24} className="text-blue-500" />
-                </div>
+                <p className="text-sm font-medium text-muted-foreground">Чек-листы</p>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => setShowOrdersDialog(true)}>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Заявки</p>
-                  <p className="text-2xl font-bold">{orderStats.total}</p>
+          <Card 
+            className="cursor-pointer active:scale-95 transition-all duration-150 border-2" 
+            onClick={() => setShowOrdersDialog(true)}
+          >
+            <CardContent className="p-4">
+              <div className="flex flex-col gap-3">
+                <div className="flex items-center justify-between">
+                  <div className="w-10 h-10 bg-green-500/10 rounded-xl flex items-center justify-center">
+                    <Icon name="Package" size={20} className="text-green-500" />
+                  </div>
+                  <p className="text-3xl font-bold">{orderStats.total}</p>
                 </div>
-                <div className="w-12 h-12 bg-green-500/10 rounded-full flex items-center justify-center">
-                  <Icon name="Package" size={24} className="text-green-500" />
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-medium text-muted-foreground">Заявки</p>
+                  {orderStats.pending > 0 && (
+                    <Badge variant="secondary" className="text-xs px-2 py-0">
+                      {orderStats.pending}
+                    </Badge>
+                  )}
                 </div>
               </div>
-              {orderStats.pending > 0 && (
-                <Badge variant="outline" className="mt-2">
-                  {orderStats.pending} ожидает
-                </Badge>
-              )}
             </CardContent>
           </Card>
         </div>
 
         <Tabs defaultValue="checklists" className="w-full">
-          <div className="sticky top-0 z-10 bg-gradient-to-br from-background via-background to-muted/20 pb-4 safe-top">
-            <TabsList className="w-full justify-start overflow-x-auto flex-nowrap h-auto p-1">
-              <TabsTrigger value="checklists" className="flex items-center gap-2 whitespace-nowrap touch-target">
-                <Icon name="CheckSquare" size={18} />
-                <span className="hidden sm:inline">Чек-листы</span>
-                <span className="sm:hidden">Чек-л.</span>
+          <div className="sticky top-[57px] z-40 bg-gradient-to-br from-background via-background to-muted/20 pb-3 pt-1">
+            <TabsList className="w-full justify-start overflow-x-auto flex-nowrap h-auto p-1 gap-1">
+              <TabsTrigger value="checklists" className="flex items-center gap-1.5 whitespace-nowrap px-3 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                <Icon name="CheckSquare" size={16} />
+                <span className="text-sm">Чек-листы</span>
               </TabsTrigger>
-              <TabsTrigger value="ttk" className="flex items-center gap-2 whitespace-nowrap touch-target">
-                <Icon name="BookOpen" size={18} />
-                <span className="hidden sm:inline">ТТК</span>
-                <span className="sm:hidden">ТТК</span>
+              <TabsTrigger value="ttk" className="flex items-center gap-1.5 whitespace-nowrap px-3 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                <Icon name="BookOpen" size={16} />
+                <span className="text-sm">ТТК</span>
               </TabsTrigger>
-              <TabsTrigger value="inventory" className="flex items-center gap-2 whitespace-nowrap touch-target">
-                <Icon name="Package" size={18} />
-                <span className="hidden sm:inline">Инвентаризация</span>
-                <span className="sm:hidden">Инвент.</span>
+              <TabsTrigger value="inventory" className="flex items-center gap-1.5 whitespace-nowrap px-3 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                <Icon name="Package" size={16} />
+                <span className="text-sm">Инвент.</span>
               </TabsTrigger>
-              <TabsTrigger value="orders" className="flex items-center gap-2 whitespace-nowrap touch-target">
-                <Icon name="ShoppingCart" size={18} />
-                <span className="hidden sm:inline">Заявки на закупку</span>
-                <span className="sm:hidden">Закупки</span>
+              <TabsTrigger value="orders" className="flex items-center gap-1.5 whitespace-nowrap px-3 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                <Icon name="ShoppingCart" size={16} />
+                <span className="text-sm">Закупки</span>
               </TabsTrigger>
-              <TabsTrigger value="writeoffs" className="flex items-center gap-2 whitespace-nowrap touch-target">
-                <Icon name="Trash2" size={18} />
-                <span className="hidden sm:inline">Списания</span>
-                <span className="sm:hidden">Списан.</span>
+              <TabsTrigger value="writeoffs" className="flex items-center gap-1.5 whitespace-nowrap px-3 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                <Icon name="Trash2" size={16} />
+                <span className="text-sm">Списания</span>
               </TabsTrigger>
               {isChefOrSousChef() && (
-                <TabsTrigger value="employees" className="flex items-center gap-2 whitespace-nowrap touch-target">
-                  <Icon name="Users" size={18} />
-                  <span className="hidden sm:inline">Сотрудники</span>
-                  <span className="sm:hidden">Сотруд.</span>
+                <TabsTrigger value="employees" className="flex items-center gap-1.5 whitespace-nowrap px-3 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                  <Icon name="Users" size={16} />
+                  <span className="text-sm">Команда</span>
                 </TabsTrigger>
               )}
             </TabsList>
           </div>
 
-          <div className="mt-6">
+          <div className="mt-3">
             <ChecklistsTab 
               checklistList={checklistList}
               isChefOrSousChef={isChefOrSousChef}
