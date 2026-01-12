@@ -42,11 +42,13 @@ const LoginPage = () => {
     }
     
     try {
+      setError('');
       const { inviteLink } = await createRestaurant(name, restaurantName);
       setGeneratedInviteLink(inviteLink);
       setShowInviteLink(true);
     } catch (error) {
-      setError('Ошибка при создании ресторана');
+      console.error('Create restaurant error:', error);
+      setError(`Ошибка при создании ресторана: ${error instanceof Error ? error.message : 'Неизвестная ошибка'}`);
     }
   };
 
