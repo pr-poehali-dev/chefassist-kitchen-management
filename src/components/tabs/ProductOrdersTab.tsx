@@ -388,7 +388,7 @@ const ProductOrdersTab = ({ restaurantId, userId, isChefOrSousChef }: ProductOrd
   };
 
   return (
-    <TabsContent value="products" className="space-y-4">
+    <TabsContent value="orders" className="space-y-4">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <div>
           <h2 className="text-2xl sm:text-3xl font-bold">Продукты и заявки</h2>
