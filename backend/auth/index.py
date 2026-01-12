@@ -41,6 +41,8 @@ def handler(event: dict, context) -> dict:
                 return update_employee_role(body)
             elif path == 'remove_employee':
                 return remove_employee(body)
+            elif path == 'update_online_status':
+                return update_online_status(body)
         
         return {
             'statusCode': 400,
@@ -302,5 +304,49 @@ def remove_employee(body: dict) -> dict:
         'statusCode': 200,
         'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
         'body': json.dumps({'success': True}),
+        'isBase64Encoded': False
+    }
+
+
+def update_online_status(body: dict) -> dict:
+    '''Обновление онлайн-статуса сотрудника'''
+    employee_id = body.get('employeeId')
+    is_online = body.get('isOnline', True)
+    
+    if not employee_id:
+        return {
+            'statusCode': 400,
+            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+            'body': json.dumps({'error': 'Missing employee_id'}),
+            'isBase64Encoded': False
+        }
+    
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+    
+    cur.execute(
+        "UPDATE employees SET is_online = %s, last_seen = CURRENT_TIMESTAMP WHERE id = %s RETURNING id, is_online, last_seen",
+        (is_online, employee_id)
+    )
+    employee = cur.fetchone()
+    
+    if not employee:
+        cur.close()
+        conn.close()
+        return {
+            'statusCode': 404,
+            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+            'body': json.dumps({'error': 'Employee not found'}),
+            'isBase64Encoded': False
+        }
+    
+    conn.commit()
+    cur.close()
+    conn.close()
+    
+    return {
+        'statusCode': 200,
+        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+        'body': json.dumps({'employee': dict(employee)}, default=str),
         'isBase64Encoded': False
     }

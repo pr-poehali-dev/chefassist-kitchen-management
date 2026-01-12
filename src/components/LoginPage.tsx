@@ -112,7 +112,12 @@ const LoginPage = () => {
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 flex items-center justify-center p-4 safe-top safe-bottom">
         <Card className="w-full max-w-md animate-scale-in">
           <CardHeader className="text-center pb-4">
-            <div className="mb-2">
+            <div className="mb-2 flex flex-col items-center">
+              <img 
+                src="https://cdn.poehali.dev/projects/ca4481ee-9d03-47bf-afcd-998c0128f9ce/files/2f8a5a42-7dbe-437b-9787-b8cd165e8f90.jpg" 
+                alt="KitchenCosmo Logo" 
+                className="h-20 w-20 rounded-xl object-cover mb-3 shadow-lg"
+              />
               <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
                 KitchenCosmo
               </h1>

@@ -32,6 +32,8 @@ export default function EmployeesTab() {
 
   useEffect(() => {
     loadEmployees();
+    const interval = setInterval(loadEmployees, 10000);
+    return () => clearInterval(interval);
   }, []);
 
   const loadEmployees = async () => {
@@ -140,6 +142,12 @@ export default function EmployeesTab() {
                           <p className="font-semibold">{employee.name}</p>
                           {employee.id === user?.id && (
                             <Badge variant="outline" className="text-xs">Вы</Badge>
+                          )}
+                          {(employee as any).is_online && (
+                            <div className="flex items-center gap-1">
+                              <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+                              <span className="text-xs text-green-600 font-medium">Онлайн</span>
+                            </div>
                           )}
                         </div>
                         <div className="flex items-center gap-2 mt-1">

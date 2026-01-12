@@ -88,13 +88,20 @@ const Index = () => {
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 safe-top safe-bottom">
       <div className="max-w-7xl mx-auto p-4 pb-24">
         <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
-          <div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-              KitchenCosmo
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              {user?.role === 'chef' ? '👨‍🍳 Шеф-повар' : user?.role === 'sous_chef' ? '👨‍🍳 Су-шеф' : '👨‍🍳 Повар'} • {user?.name}
-            </p>
+          <div className="flex items-center gap-3">
+            <img 
+              src="https://cdn.poehali.dev/projects/ca4481ee-9d03-47bf-afcd-998c0128f9ce/files/2f8a5a42-7dbe-437b-9787-b8cd165e8f90.jpg" 
+              alt="KitchenCosmo Logo" 
+              className="h-12 w-12 rounded-lg object-cover"
+            />
+            <div>
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                KitchenCosmo
+              </h1>
+              <p className="text-sm text-muted-foreground">
+                {user?.role === 'chef' ? '👨‍🍳 Шеф-повар' : user?.role === 'sous_chef' ? '👨‍🍳 Су-шеф' : '👨‍🍳 Повар'} • {user?.name}
+              </p>
+            </div>
           </div>
           <Button variant="outline" onClick={() => { logout(); window.location.reload(); }}>
             <Icon name="LogOut" size={18} className="mr-2" />

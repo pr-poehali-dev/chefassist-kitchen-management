@@ -72,8 +72,39 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
       loadRestaurantInfo();
       loadEmployees();
+      updateOnlineStatus(true);
+      
+      const interval = setInterval(() => {
+        updateOnlineStatus(true);
+      }, 30000);
+      
+      const handleBeforeUnload = () => {
+        updateOnlineStatus(false);
+      };
+      
+      window.addEventListener('beforeunload', handleBeforeUnload);
+      
+      return () => {
+        clearInterval(interval);
+        window.removeEventListener('beforeunload', handleBeforeUnload);
+        updateOnlineStatus(false);
+      };
     }
   }, [user?.restaurantId]);
+  
+  const updateOnlineStatus = async (isOnline: boolean) => {
+    if (!user?.id) return;
+    
+    try {
+      await fetch(`${API_URL}?action=update_online_status`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ employeeId: user.id, isOnline })
+      });
+    } catch (error) {
+      console.error('Update online status error:', error);
+    }
+  };
 
   const loadRestaurantInfo = async () => {
     if (!user?.restaurantId) return;
