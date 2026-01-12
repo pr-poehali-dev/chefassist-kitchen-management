@@ -15,15 +15,8 @@ export const mockOrders = [
 ];
 
 export const useInventoryManagement = () => {
-  const [activeInventory, setActiveInventory] = useState<any>(() => {
-    const saved = localStorage.getItem('kitchenCosmo_activeInventory');
-    return saved ? JSON.parse(saved) : null;
-  });
-
-  const [inventoryHistory, setInventoryHistory] = useState<any[]>(() => {
-    const saved = localStorage.getItem('kitchenCosmo_inventoryHistory');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [activeInventory, setActiveInventory] = useState<any>(null);
+  const [inventoryHistory, setInventoryHistory] = useState<any[]>([]);
 
   const lowStockItems = mockIngredients.filter(item => item.quantity < item.minStock);
   const totalInventoryValue = mockIngredients.reduce((sum, item) => sum + (item.quantity * item.price), 0);

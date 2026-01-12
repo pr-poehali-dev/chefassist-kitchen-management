@@ -1,0 +1,24 @@
+{
+  "tests": [
+    {
+      "name": "Get active inventory - no inventory",
+      "method": "GET",
+      "path": "/?action=get_active_inventory&restaurantId=1",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "inventory": null
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Get inventory history - empty",
+      "method": "GET",
+      "path": "/?action=get_inventory_history&restaurantId=1",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "inventories": []
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}

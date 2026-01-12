@@ -213,6 +213,7 @@ const Index = () => {
               setInventoryHistory={setInventoryHistory}
               isChefOrSousChef={isChefOrSousChef}
               userName={user?.name || ''}
+              restaurantId={user?.restaurantId}
             />
 
             <ProductOrdersTab 

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,6 +10,8 @@ import CookInventoryView from './inventory/CookInventoryView';
 import ChefInventoryView from './inventory/ChefInventoryView';
 import InventoryHistoryView from './inventory/InventoryHistoryView';
 
+const INVENTORY_API_URL = 'https://functions.poehali.dev/085ce3c7-40f0-42a5-afdb-a4083f720fdb';
+
 interface InventoryTabProps {
   activeInventory: any;
   setActiveInventory: (inv: any) => void;
@@ -17,6 +19,7 @@ interface InventoryTabProps {
   setInventoryHistory: (history: any[]) => void;
   isChefOrSousChef: () => boolean;
   userName: string;
+  restaurantId?: number;
 }
 
 export default function InventoryTab({ 
@@ -25,45 +28,106 @@ export default function InventoryTab({
   inventoryHistory, 
   setInventoryHistory,
   isChefOrSousChef,
-  userName
+  userName,
+  restaurantId
 }: InventoryTabProps) {
   const [inventoryProducts, setInventoryProducts] = useState<string>('');
   const [inventorySemis, setInventorySemis] = useState<string>('');
   const [inventoryDate, setInventoryDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [viewInventoryReport, setViewInventoryReport] = useState<any>(null);
   const [tempQuantities, setTempQuantities] = useState<{[key: number]: string}>({});
+  const [loading, setLoading] = useState(false);
 
-  const handleStartInventory = () => {
-    if (!inventoryProducts.trim() && !inventorySemis.trim()) return;
+  useEffect(() => {
+    if (restaurantId) {
+      loadActiveInventory();
+      loadInventoryHistory();
+      const interval = setInterval(loadActiveInventory, 10000);
+      return () => clearInterval(interval);
+    }
+  }, [restaurantId]);
+
+  const loadActiveInventory = async () => {
+    if (!restaurantId) return;
+    try {
+      const response = await fetch(`${INVENTORY_API_URL}?action=get_active_inventory&restaurantId=${restaurantId}`);
+      if (response.ok) {
+        const data = await response.json();
+        setActiveInventory(data.inventory);
+      }
+    } catch (error) {
+      console.error('Error loading active inventory:', error);
+    }
+  };
+
+  const loadInventoryHistory = async () => {
+    if (!restaurantId) return;
+    try {
+      const response = await fetch(`${INVENTORY_API_URL}?action=get_inventory_history&restaurantId=${restaurantId}`);
+      if (response.ok) {
+        const data = await response.json();
+        setInventoryHistory(data.inventories || []);
+      }
+    } catch (error) {
+      console.error('Error loading inventory history:', error);
+    }
+  };
+
+  const handleStartInventory = async () => {
+    if (!restaurantId || (!inventoryProducts.trim() && !inventorySemis.trim())) return;
+    
     const products = inventoryProducts.split('\n').filter(p => p.trim()).map(p => ({ 
       name: p.trim(),
-      type: 'product',
-      entries: []
+      type: 'product'
     }));
     const semis = inventorySemis.split('\n').filter(p => p.trim()).map(p => ({ 
       name: p.trim(),
-      type: 'semi',
-      entries: []
+      type: 'semi'
     }));
     const allProducts = [...products, ...semis].sort((a, b) => a.name.localeCompare(b.name, 'ru'));
-    const inventory = {
-      id: Date.now(),
-      name: `Инвентаризация ${new Date(inventoryDate).toLocaleDateString()}`,
-      date: inventoryDate,
-      responsible: userName,
-      products: allProducts,
-      status: 'in_progress'
-    };
-    setActiveInventory(inventory);
-    localStorage.setItem('kitchenCosmo_activeInventory', JSON.stringify(inventory));
-    setInventoryProducts('');
-    setInventorySemis('');
-    setInventoryDate(new Date().toISOString().split('T')[0]);
+    
+    try {
+      setLoading(true);
+      const response = await fetch(`${INVENTORY_API_URL}?action=create_inventory`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          restaurantId,
+          name: `Инвентаризация ${new Date(inventoryDate).toLocaleDateString()}`,
+          date: inventoryDate,
+          responsible: userName,
+          products: allProducts
+        })
+      });
+      
+      if (response.ok) {
+        await loadActiveInventory();
+        setInventoryProducts('');
+        setInventorySemis('');
+        setInventoryDate(new Date().toISOString().split('T')[0]);
+      }
+    } catch (error) {
+      console.error('Error creating inventory:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleDeleteInventory = () => {
-    setActiveInventory(null);
-    localStorage.removeItem('kitchenCosmo_activeInventory');
+  const handleDeleteInventory = async () => {
+    if (!activeInventory) return;
+    try {
+      const response = await fetch(`${INVENTORY_API_URL}?action=delete_inventory`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ inventoryId: activeInventory.id })
+      });
+      
+      if (response.ok) {
+        await loadActiveInventory();
+      }
+    } catch (error) {
+      console.error('Error deleting inventory:', error);
+    }
   };
 
   const handleCopyLastInventory = () => {
@@ -123,16 +187,31 @@ export default function InventoryTab({
     XLSX.writeFile(workbook, fileName);
   };
 
-  const handleSubmitEntry = (productIndex: number, quantity: number) => {
+  const handleSubmitEntry = async (productIndex: number, quantity: number) => {
     if (!activeInventory || quantity < 0) return;
-    const updated = {...activeInventory};
-    const product = updated.products[productIndex];
+    const product = activeInventory.products[productIndex];
     
-    if (!product.entries) product.entries = [];
-    product.entries.push({ user: userName, quantity });
-    
-    setActiveInventory(updated);
-    localStorage.setItem('kitchenCosmo_activeInventory', JSON.stringify(updated));
+    try {
+      const response = await fetch(`${INVENTORY_API_URL}?action=add_entry`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          inventoryProductId: product.id,
+          userName,
+          quantity
+        })
+      });
+      
+      if (response.ok) {
+        await loadActiveInventory();
+        setTempQuantities(prev => {
+          const { [productIndex]: _, ...rest } = prev;
+          return rest;
+        });
+      }
+    } catch (error) {
+      console.error('Error submitting entry:', error);
+    }
   };
 
   const getUserPendingProducts = () => {
@@ -145,18 +224,22 @@ export default function InventoryTab({
       .sort((a: any, b: any) => a.name.localeCompare(b.name, 'ru'));
   };
 
-  const handleCompleteInventory = () => {
+  const handleCompleteInventory = async () => {
     if (!activeInventory) return;
-    const completed = {
-      ...activeInventory,
-      status: 'completed',
-      completedDate: new Date().toISOString().split('T')[0]
-    };
-    const updatedHistory = [...inventoryHistory, completed];
-    setInventoryHistory(updatedHistory);
-    localStorage.setItem('kitchenCosmo_inventoryHistory', JSON.stringify(updatedHistory));
-    setActiveInventory(null);
-    localStorage.removeItem('kitchenCosmo_activeInventory');
+    try {
+      const response = await fetch(`${INVENTORY_API_URL}?action=complete_inventory`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ inventoryId: activeInventory.id })
+      });
+      
+      if (response.ok) {
+        await loadActiveInventory();
+        await loadInventoryHistory();
+      }
+    } catch (error) {
+      console.error('Error completing inventory:', error);
+    }
   };
 
   return (
