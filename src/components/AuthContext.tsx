@@ -212,7 +212,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       });
 
       if (response.ok) {
-        await loadEmployees();
+        setEmployees(prev => prev.map(emp => 
+          emp.id === employeeId ? { ...emp, role: newRole } : emp
+        ));
         
         if (user?.id === employeeId) {
           const updatedUser = { ...user, role: newRole };
@@ -234,7 +236,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       });
 
       if (response.ok) {
-        await loadEmployees();
+        setEmployees(prev => prev.filter(emp => emp.id !== employeeId));
       }
     } catch (error) {
       console.error('Remove employee error:', error);

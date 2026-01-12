@@ -98,7 +98,7 @@ export const useRestaurantData = (restaurantId: number | undefined) => {
       
       if (response.ok) {
         const data = await response.json();
-        await loadTTK();
+        setTtkList(prev => [...prev, data.ttk]);
         return data.ttk;
       }
     } catch (error) {
@@ -116,7 +116,7 @@ export const useRestaurantData = (restaurantId: number | undefined) => {
       });
       
       if (response.ok) {
-        await loadTTK();
+        setTtkList(prev => prev.map(t => t.id === ttk.id ? { ...t, ...ttk } : t));
         return true;
       }
     } catch (error) {
@@ -134,7 +134,7 @@ export const useRestaurantData = (restaurantId: number | undefined) => {
       });
       
       if (response.ok) {
-        await loadTTK();
+        setTtkList(prev => prev.filter(t => t.id !== id));
         return true;
       }
     } catch (error) {
@@ -155,7 +155,7 @@ export const useRestaurantData = (restaurantId: number | undefined) => {
       
       if (response.ok) {
         const data = await response.json();
-        await loadChecklists();
+        setChecklistList(prev => [...prev, data.checklist]);
         return data.checklist;
       }
     } catch (error) {
@@ -173,7 +173,7 @@ export const useRestaurantData = (restaurantId: number | undefined) => {
       });
       
       if (response.ok) {
-        await loadChecklists();
+        setChecklistList(prev => prev.map(c => c.id === checklist.id ? { ...c, ...checklist } : c));
         return true;
       }
     } catch (error) {
@@ -191,7 +191,7 @@ export const useRestaurantData = (restaurantId: number | undefined) => {
       });
       
       if (response.ok) {
-        await loadChecklists();
+        setChecklistList(prev => prev.filter(c => c.id !== id));
         return true;
       }
     } catch (error) {
@@ -209,7 +209,12 @@ export const useRestaurantData = (restaurantId: number | undefined) => {
       });
       
       if (response.ok) {
-        await loadChecklists();
+        setChecklistList(prev => prev.map(checklist => ({
+          ...checklist,
+          items: checklist.items.map(item => 
+            item.id === itemId ? { ...item, status, timestamp } : item
+          )
+        })));
         return true;
       }
     } catch (error) {
