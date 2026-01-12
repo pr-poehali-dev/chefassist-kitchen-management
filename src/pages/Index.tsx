@@ -215,12 +215,13 @@ const Index = () => {
 
           <div className="mt-6">
             <ChecklistsTab 
-              checklists={checklistList}
+              checklistList={checklistList}
+              isChefOrSousChef={isChefOrSousChef}
+              userName={user?.name || ''}
               onCreateChecklist={createChecklist}
               onUpdateChecklist={updateChecklist}
               onDeleteChecklist={deleteChecklist}
-              onUpdateChecklistItem={updateChecklistItem}
-              loading={loading}
+              onUpdateItem={updateChecklistItem}
             />
 
             <TtkTab 
