@@ -109,37 +109,18 @@ const Index = () => {
           </Button>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-2 gap-4 mb-6">
           <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => setShowWorkshopReport(true)}>
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Цехи</p>
+                  <p className="text-sm text-muted-foreground">Чек-листы</p>
                   <p className="text-2xl font-bold">{Object.keys(workshopStats).length}</p>
                 </div>
                 <div className="w-12 h-12 bg-blue-500/10 rounded-full flex items-center justify-center">
-                  <Icon name="Factory" size={24} className="text-blue-500" />
+                  <Icon name="CheckSquare" size={24} className="text-blue-500" />
                 </div>
               </div>
-            </CardContent>
-          </Card>
-
-          <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => setShowWorkshopReport(true)}>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Проблемы</p>
-                  <p className="text-2xl font-bold">{totalIssues}</p>
-                </div>
-                <div className="w-12 h-12 bg-red-500/10 rounded-full flex items-center justify-center">
-                  <Icon name="AlertCircle" size={24} className="text-red-500" />
-                </div>
-              </div>
-              {totalIssues > 0 && (
-                <Badge variant="destructive" className="mt-2">
-                  Требуется внимание
-                </Badge>
-              )}
             </CardContent>
           </Card>
 
@@ -157,25 +138,6 @@ const Index = () => {
               {orderStats.pending > 0 && (
                 <Badge variant="outline" className="mt-2">
                   {orderStats.pending} ожидает
-                </Badge>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Склад</p>
-                  <p className="text-2xl font-bold">{totalInventoryValue.toLocaleString()}₽</p>
-                </div>
-                <div className="w-12 h-12 bg-orange-500/10 rounded-full flex items-center justify-center">
-                  <Icon name="Warehouse" size={24} className="text-orange-500" />
-                </div>
-              </div>
-              {lowStockItems.length > 0 && (
-                <Badge variant="outline" className="mt-2 border-orange-500 text-orange-500">
-                  {lowStockItems.length} на исходе
                 </Badge>
               )}
             </CardContent>
